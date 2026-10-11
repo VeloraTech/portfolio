@@ -31,7 +31,16 @@ jobs:
       - name: Build
         run: npm run build
       - name: Preserve SPA routes
-        run: cp dist/index.html dist/404.html
+        run: |
+          cp dist/index.html dist/404.html
+          for route in work engineering about contact; do
+            mkdir -p "dist/$route"
+            cp dist/index.html "dist/$route/index.html"
+          done
+          for route in aster mouaec telica agenttrace nativerelay cleaner; do
+            mkdir -p "dist/work/$route"
+            cp dist/index.html "dist/work/$route/index.html"
+          done
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
