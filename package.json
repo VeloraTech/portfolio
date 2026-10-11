@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
     "@vitejs/plugin-react": "latest",
     "autoprefixer": "latest",
     "gsap": "^3.15.0",
@@ -17,6 +19,7 @@
     "react-dom": "latest",
     "react-router-dom": "latest",
     "tailwindcss": "^3.4.17",
+    "three": "^0.186.1",
     "vite": "latest"
   }
 }
