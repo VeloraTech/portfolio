@@ -14,6 +14,7 @@
     "@vitejs/plugin-react": "latest",
     "autoprefixer": "latest",
     "gsap": "^3.15.0",
+    "lucide-react": "^1.55.0",
     "postcss": "latest",
     "react": "latest",
     "react-dom": "latest",
