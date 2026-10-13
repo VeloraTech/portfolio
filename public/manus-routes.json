@@ -1,0 +1,10 @@
+{
+  "routes": [
+    {"path":"/","title":"Coach Logic — Index"},
+    {"path":"/work","title":"Coach Logic — Work"},
+    {"path":"/work/:slug","title":"Coach Logic — Project study"},
+    {"path":"/engineering","title":"Coach Logic — Systems"},
+    {"path":"/about","title":"Coach Logic — About"},
+    {"path":"/contact","title":"Coach Logic — Contact"}
+  ]
+}
