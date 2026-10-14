@@ -1,14 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { BrowserRouter, Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowUpRight, FileText, Menu, X } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Html, OrbitControls } from '@react-three/drei';
+import { ArrowUpRight, BriefcaseBusiness, Camera, FileText, GitBranch, Mail, Menu, X } from 'lucide-react';
+import { getCanonicalUrl, getRouteSeo, getRouteStructuredData, OG_IMAGE_ALT, OG_IMAGE_URL } from './seo.js';
 import './index.css';
 
-gsap.registerPlugin(ScrollTrigger);
+const ThreeScene = React.lazy(() => import('./ThreeScene.jsx'));
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 const projects = {
   aster: {
@@ -58,13 +56,14 @@ const projects = {
 
 const navLinks = [['/', 'Index'], ['/work', 'Work'], ['/engineering', 'Systems'], ['/about', 'About'], ['/contact', 'Contact']];
 const socialLinks = [
-  { label: 'GitHub', href: 'https://github.com/VeloraTech' },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/coach-logic-804600366/' },
-  { label: 'X', href: 'https://x.com/RyanDan934' },
-  { label: 'Email', href: 'mailto:alpheausdalighton@gmail.com' },
+  { label: 'GitHub', href: 'https://github.com/VeloraTech', Icon: GitBranch },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/alpheaus-daniel-804600366', Icon: BriefcaseBusiness },
+  { label: 'X', href: 'https://x.com/RyanDan934', Icon: X },
+  { label: 'Instagram', href: 'https://www.instagram.com/tech.velora', Icon: Camera },
+  { label: 'Email', href: 'mailto:alpheausdalighton@gmail.com', Icon: Mail },
 ];
 const assetConfig = {
-  profilePhoto: { available: true, path: `${import.meta.env.BASE_URL}assets/profile-photo.jpg` },
+  profilePhoto: { available: true, path: `${import.meta.env.BASE_URL}assets/profile-photo-2963c32f3ff0.webp` },
   resume: { available: true, path: `${import.meta.env.BASE_URL}assets/Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf` },
 };
 const axisPoints = [
@@ -89,7 +88,7 @@ function TransitionLink({ to, children, className = '', onClick, ...props }) {
 }
 
 function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReduced(query.matches);
@@ -105,8 +104,10 @@ function ScrambleText({ children }) {
   const [text, setText] = useState(source);
   const [active, setActive] = useState(false);
   const timer = useRef(null);
+  const reduced = useReducedMotion();
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const scramble = () => {
+    if (reduced) return;
     if (timer.current) window.clearInterval(timer.current);
     setActive(true);
     let frame = 0;
@@ -126,6 +127,13 @@ function ScrambleText({ children }) {
       }
     }, 40);
   };
+  useEffect(() => {
+    if (!reduced || !timer.current) return;
+    window.clearInterval(timer.current);
+    timer.current = null;
+    setText(source);
+    setActive(false);
+  }, [reduced, source]);
   useEffect(() => () => timer.current && window.clearInterval(timer.current), []);
   return <span className={active ? 'scramble-text is-active' : 'scramble-text'} onMouseEnter={scramble} onFocus={scramble} tabIndex="0">{text}</span>;
 }
@@ -150,8 +158,9 @@ function CursorField() {
     const el = canvas.current;
     const ctx = el.getContext('2d');
     const pointer = { x: -100, y: -100, tx: -100, ty: -100, vx: 0, vy: 0 };
-    const particles = Array.from({ length: 26 }, (_, index) => ({ x: -100, y: -100, size: index % 6 === 0 ? 2.4 : 1.25, lag: .07 + (index % 7) * .014, alpha: .12 + (index % 4) * .035 }));
+    const particles = Array.from({ length: 26 }, (_, index) => ({ x: -100, y: -100, size: index % 6 === 0 ? 2.8 : 1.45, lag: .07 + (index % 7) * .014, alpha: .21 + (index % 4) * .04 }));
     let raf = 0;
+    let lastActivity = 0;
     const resize = () => {
       const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
       el.width = window.innerWidth * ratio;
@@ -159,32 +168,69 @@ function CursorField() {
       el.style.width = `${window.innerWidth}px`;
       el.style.height = `${window.innerHeight}px`;
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      schedule();
     };
-    const move = (event) => { pointer.tx = event.clientX; pointer.ty = event.clientY; };
-    const render = () => {
-      pointer.vx += (pointer.tx - pointer.x) * .09;
-      pointer.vy += (pointer.ty - pointer.y) * .09;
+    const schedule = () => {
+      if (!raf && !document.hidden) raf = requestAnimationFrame(render);
+    };
+    const move = (event) => {
+      pointer.tx = event.clientX;
+      pointer.ty = event.clientY;
+      lastActivity = performance.now();
+      schedule();
+    };
+    const focus = (event) => {
+      const rect = event.target?.getBoundingClientRect?.();
+      if (!rect || !rect.width || !rect.height) return;
+      pointer.tx = rect.left + rect.width / 2;
+      pointer.ty = rect.top + rect.height / 2;
+      lastActivity = performance.now();
+      schedule();
+    };
+    const render = (now) => {
+      raf = 0;
+      const dx = pointer.tx - pointer.x;
+      const dy = pointer.ty - pointer.y;
+      pointer.vx += dx * .09;
+      pointer.vy += dy * .09;
       pointer.vx *= .72;
       pointer.vy *= .72;
       pointer.x += pointer.vx;
       pointer.y += pointer.vy;
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      const speed = Math.hypot(pointer.vx, pointer.vy);
+      const fade = Math.max(0, 1 - (now - lastActivity) / 1200);
+      let unsettled = Math.hypot(pointer.tx - pointer.x, pointer.ty - pointer.y) > .3 || speed > .025;
       particles.forEach((particle, index) => {
         const lead = particles[index - 1] || pointer;
-        particle.x += (lead.x - particle.x) * particle.lag;
-        particle.y += (lead.y - particle.y) * particle.lag;
+        const gapX = lead.x - particle.x;
+        const gapY = lead.y - particle.y;
+        particle.x += gapX * particle.lag;
+        particle.y += gapY * particle.lag;
+        if (Math.hypot(gapX, gapY) > .3) unsettled = true;
         ctx.beginPath();
-        ctx.fillStyle = `rgba(113, 131, 104, ${particle.alpha * Math.min(1, Math.hypot(pointer.vx, pointer.vy) / 7 + .2)})`;
+        ctx.fillStyle = `rgba(113, 131, 104, ${particle.alpha * (.18 + Math.min(.82, speed / 7)) * fade})`;
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
       });
-      raf = requestAnimationFrame(render);
+      if (unsettled || fade > 0) schedule();
+    };
+    const visibility = () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else schedule();
     };
     resize();
     window.addEventListener('resize', resize);
     window.addEventListener('pointermove', move, { passive: true });
-    raf = requestAnimationFrame(render);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); window.removeEventListener('pointermove', move); };
+    window.addEventListener('focusin', focus, true);
+    document.addEventListener('visibilitychange', visibility);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('focusin', focus, true);
+      document.removeEventListener('visibilitychange', visibility);
+    };
   }, [reduced]);
   return <canvas className="cursor-field" ref={canvas} aria-hidden="true"/>;
 }
@@ -204,67 +250,33 @@ function ScrollProgress() {
 function MotionPage({ children }) {
   const scope = useRef(null);
   const reduced = useReducedMotion();
-  useLayoutEffect(() => {
+  const location = useLocation();
+  useIsoLayoutEffect(() => {
+    let active = true;
+    let context;
     if (!scope.current || reduced) return undefined;
-    const ctx = gsap.context(() => {
-      gsap.utils.toArray('[data-reveal]').forEach((element) => gsap.fromTo(element, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: .8, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 84%', once: true } }));
-      gsap.utils.toArray('[data-parallax]').forEach((element) => gsap.to(element, { yPercent: -12, ease: 'none', scrollTrigger: { trigger: element, start: 'top bottom', end: 'bottom top', scrub: true } }));
-      gsap.utils.toArray('[data-line]').forEach((element) => gsap.fromTo(element, { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left center', duration: 1, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 85%', once: true } }));
-      const hero = scope.current.querySelector('.hero-scene');
-      if (hero) {
-        const timeline = gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: '+=1150', scrub: 1.1 } });
-        timeline.to('.hero-copy', { y: -145, opacity: .16, ease: 'none' }, 0)
-          .to('.hero-stage--front', { scale: 1.46, rotateZ: 5, xPercent: 9, yPercent: 10, ease: 'none' }, 0)
-          .to('.hero-depth--mid', { xPercent: 14, yPercent: -12, scale: 1.18, ease: 'none' }, 0)
-          .to('.hero-depth--back', { xPercent: -8, yPercent: 10, scale: 1.08, ease: 'none' }, 0)
-          .to('.hero-annotations', { yPercent: -28, opacity: .35, ease: 'none' }, 0)
-          .to('.hero-foot', { y: 40, opacity: 0, ease: 'none' }, 0);
-      }
-    }, scope);
-    return () => ctx.revert();
-  }, [reduced]);
+    import('./motion.js').then(({ gsap, ScrollTrigger }) => {
+      if (!active || !scope.current) return;
+      context = gsap.context(() => {
+        gsap.utils.toArray('[data-reveal]').forEach((element) => gsap.fromTo(element, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: .8, delay: Number(element.dataset.revealOrder || 0) * .11, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 84%', once: true } }));
+        gsap.utils.toArray('[data-parallax]').forEach((element) => gsap.to(element, { yPercent: -12, ease: 'none', scrollTrigger: { trigger: element, start: 'top bottom', end: 'bottom top', scrub: true } }));
+        gsap.utils.toArray('[data-line]').forEach((element) => gsap.fromTo(element, { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left center', duration: 1, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 85%', once: true } }));
+        const hero = scope.current.querySelector('.hero-scene');
+        if (hero) {
+          const timeline = gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: '+=1150', scrub: 1.1 } });
+          timeline.to('.hero-copy', { y: -145, opacity: .16, ease: 'none' }, 0)
+            .to('.hero-stage--front', { scale: 1.08, rotateZ: 2, xPercent: 1, yPercent: 3, ease: 'none' }, 0)
+            .to('.hero-depth--mid', { xPercent: 10, yPercent: -8, scale: 1.12, ease: 'none' }, 0)
+            .to('.hero-depth--back', { xPercent: -6, yPercent: 8, scale: 1.05, ease: 'none' }, 0)
+            .to('.hero-annotations', { yPercent: -10, opacity: .82, ease: 'none' }, 0)
+            .to('.hero-foot', { y: 24, opacity: 0, ease: 'none' }, 0);
+        }
+      }, scope);
+      ScrollTrigger.refresh();
+    }).catch((error) => console.error('Portfolio motion could not load', error));
+    return () => { active = false; context?.revert(); };
+  }, [reduced, location.pathname]);
   return <div ref={scope}>{children}</div>;
-}
-
-function AxisPoint({ position, label, detail, color }) {
-  const [hovered, setHovered] = useState(false);
-  return <group position={position} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-    <mesh scale={hovered ? 1.45 : 1}><sphereGeometry args={[.09, 18, 18]}/><meshStandardMaterial color={color} emissive={color} emissiveIntensity={hovered ? .8 : .18} roughness={.28}/></mesh>
-    <Html distanceFactor={7} position={[.13, .13, 0]} style={{ pointerEvents: 'none' }}><span className={`scene-tooltip ${hovered ? 'is-visible' : ''}`}><b>{label}</b><small>{detail}</small></span></Html>
-  </group>;
-}
-
-function SceneRig() {
-  const rig = useRef(null);
-  useFrame((state, delta) => {
-    if (!rig.current) return;
-    const scroll = Math.min(window.scrollY, 1200);
-    rig.current.rotation.y += delta * .12;
-    rig.current.rotation.y += scroll * .000012;
-    rig.current.rotation.x = Math.sin(state.clock.elapsedTime * .4) * .06 + state.pointer.y * .08;
-    rig.current.rotation.z = state.pointer.x * .035;
-  });
-  return <group ref={rig} rotation={[.2, -.38, .08]}>
-    <Float speed={1.2} rotationIntensity={.18} floatIntensity={.45}>
-      <mesh castShadow><icosahedronGeometry args={[.9, 2]}/><meshStandardMaterial color="#d7d0c0" roughness={.26} metalness={.05} emissive="#718368" emissiveIntensity={.12}/></mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[1.12, .012, 8, 64]}/><meshBasicMaterial color="#aa6a4d" transparent opacity={.8}/></mesh>
-      <mesh rotation={[0, Math.PI / 2, .42]}><torusGeometry args={[1.34, .008, 8, 64]}/><meshBasicMaterial color="#aaa0c6" transparent opacity={.75}/></mesh>
-    </Float>
-    <mesh rotation={[0, 0, Math.PI / 2]} position={[1.2, 0, 0]}><cylinderGeometry args={[.008, .008, 2.8, 8]}/><meshBasicMaterial color="#718368"/></mesh>
-    <mesh rotation={[0, 0, Math.PI / 2]} position={[-1.2, 0, 0]}><cylinderGeometry args={[.008, .008, 2.8, 8]}/><meshBasicMaterial color="#718368"/></mesh>
-    <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 1.2, 0]}><cylinderGeometry args={[.008, .008, 2.8, 8]}/><meshBasicMaterial color="#aa6a4d"/></mesh>
-    <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -1.2, 0]}><cylinderGeometry args={[.008, .008, 2.8, 8]}/><meshBasicMaterial color="#aa6a4d"/></mesh>
-    <mesh rotation={[0, Math.PI / 2, 0]} position={[0, 0, 1.2]}><cylinderGeometry args={[.008, .008, 2.8, 8]}/><meshBasicMaterial color="#aaa0c6"/></mesh>
-    <mesh rotation={[0, Math.PI / 2, 0]} position={[0, 0, -1.2]}><cylinderGeometry args={[.008, .008, 2.8, 8]}/><meshBasicMaterial color="#aaa0c6"/></mesh>
-    {axisPoints.map((point) => <AxisPoint key={point.label} {...point}/>) }
-  </group>;
-}
-
-function ThreeScene() {
-  return <Canvas className="three-canvas" dpr={[1, 1.5]} camera={{ position: [3.6, 2.7, 5.1], fov: 42 }} gl={{ antialias: true, alpha: true }}>
-    <ambientLight intensity={1.5}/><directionalLight position={[4, 5, 4]} intensity={2.8} color="#fffaf0"/><pointLight position={[-4, -2, 2]} intensity={6} distance={8} color="#718368"/><pointLight position={[3, 0, -2]} intensity={4} distance={7} color="#aa6a4d"/>
-    <SceneRig/><OrbitControls enablePan={false} enableZoom={false} enableRotate={false}/>
-  </Canvas>;
 }
 
 class SceneErrorBoundary extends React.Component {
@@ -273,39 +285,54 @@ class SceneErrorBoundary extends React.Component {
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-function SceneAnnotations() {
+function SceneAnnotations({ axisPoints }) {
   const [active, setActive] = useState('BUILD');
-  return <div className="hero-annotations" aria-label="Interactive axis points">
-    {axisPoints.map((point) => <button key={point.label} type="button" className={active === point.label ? 'is-active' : ''} onFocus={() => setActive(point.label)} onMouseEnter={() => setActive(point.label)} onClick={() => setActive(point.label)}><span>{point.label}</span><small>{point.detail}</small></button>)}
+  return <div className="hero-annotations" role="group" aria-label="Interactive axis points">
+    {axisPoints.map((point) => <button key={point.label} type="button" aria-pressed={active === point.label} className={active === point.label ? 'is-active' : ''} onFocus={() => setActive(point.label)} onMouseEnter={() => setActive(point.label)} onClick={() => setActive(point.label)}><span>{point.label}</span><small>{point.detail}</small></button>)}
     <p>Focus a point to inspect the practice.</p>
   </div>;
 }
-
 function HeroFallback() {
   return <div className="scene-fallback" aria-hidden="true"><div className="fallback-core">CL</div><i className="fallback-axis fallback-axis--x"/><i className="fallback-axis fallback-axis--y"/><i className="fallback-orbit fallback-orbit--one"/><i className="fallback-orbit fallback-orbit--two"/><b className="fallback-point fallback-point--one">BUILD</b><b className="fallback-point fallback-point--two">BREAK</b><b className="fallback-point fallback-point--three">LEARN</b><b className="fallback-point fallback-point--four">REBUILD</b></div>;
 }
-
 function HeroScene() {
-  return <section className="hero-scene" aria-labelledby="hero-title"><div className="hero-depth hero-depth--back"/><div className="hero-depth hero-depth--mid"/><div className="hero-grid"><div className="hero-copy"><p className="eyebrow">Computer engineering student · technical mentor · toolmaker</p><h1 id="hero-title" className="hero-title" data-reveal>I build clarity into <em><ScrambleText>complex systems.</ScrambleText></em></h1><p className="hero-lede" data-reveal>I investigate how software holds together, then turn that understanding into useful products, developer tools, and interfaces people can actually use.</p><div className="hero-actions" data-reveal><Button to="/work">Enter selected work</Button><TransitionLink to="/about" className="text-link">Read the short version <ArrowUpRight size={15}/></TransitionLink></div></div><div className="hero-stage hero-stage--front"><HeroFallback/><SceneErrorBoundary fallback={<HeroFallback/>}><ThreeScene/></SceneErrorBoundary><SceneAnnotations/><span className="hero-stage__label hero-stage__label--top">01 / INTERACTIVE AXIS</span><span className="hero-stage__label hero-stage__label--bottom">Hover or focus a point</span></div></div><div className="hero-foot"><span>Scroll to explore the practice</span><span>INDEX / 00</span></div></section>;
+  const [renderThree, setRenderThree] = useState(false);
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (reduced || !window.matchMedia('(pointer: fine)').matches) { setRenderThree(false); return undefined; }
+    let cancelled = false;
+    let idleId;
+    let timerId;
+    const enable = () => { if (!cancelled) setRenderThree(true); };
+    if ('requestIdleCallback' in window) idleId = window.requestIdleCallback(enable, { timeout: 1200 });
+    else timerId = window.setTimeout(enable, 650);
+    return () => { cancelled = true; if (idleId) window.cancelIdleCallback(idleId); if (timerId) window.clearTimeout(timerId); };
+  }, [reduced]);
+  return <section className="hero-scene" aria-labelledby="hero-title"><div className="hero-depth hero-depth--back"/><div className="hero-depth hero-depth--mid"/><div className="hero-grid"><div className="hero-copy"><p className="eyebrow">Computer engineering student · technical mentor · toolmaker</p><h1 id="hero-title" className="hero-title" data-reveal>I build clarity into <em><ScrambleText>complex systems.</ScrambleText></em></h1><p className="hero-lede" data-reveal>I investigate how software holds together, then turn that understanding into useful products, developer tools, and interfaces people can actually use.</p><div className="hero-actions" data-reveal><Button to="/work">Enter selected work</Button><TransitionLink to="/about" className="text-link">Read the short version <ArrowUpRight size={15}/></TransitionLink></div></div><div className="hero-stage hero-stage--front">{renderThree ? <SceneErrorBoundary fallback={<HeroFallback/>}><React.Suspense fallback={<HeroFallback/>}><ThreeScene axisPoints={axisPoints}/></React.Suspense></SceneErrorBoundary> : <HeroFallback/>}<SceneAnnotations axisPoints={axisPoints}/><span className="hero-stage__label hero-stage__label--top">01 / INTERACTIVE AXIS</span><span className="hero-stage__label hero-stage__label--bottom">Hover or focus a point</span></div></div><div className="hero-foot"><span>Scroll to explore the work</span><span>INDEX / 00</span></div></section>;
 }
-
 function CinematicPin() {
   const scope = useRef(null);
   const reduced = useReducedMotion();
-  useLayoutEffect(() => {
+  useIsoLayoutEffect(() => {
     if (!scope.current || reduced) return undefined;
-    const ctx = gsap.context(() => {
-      const timeline = gsap.timeline({ scrollTrigger: { trigger: scope.current, start: 'top top', end: '+=2200', scrub: 1, pin: true } });
-      timeline.fromTo('.pin-bg', { scale: .72, xPercent: -12, opacity: .25 }, { scale: 1.5, xPercent: 10, opacity: 1, duration: 1 })
-        .fromTo('.pin-word', { scale: .52, y: 120, rotateX: 58, opacity: 0 }, { scale: 1, y: 0, rotateX: 0, opacity: 1, duration: 1 }, '<')
-        .fromTo('.pin-orbit', { rotation: -95, scale: .3 }, { rotation: 38, scale: 1.45, duration: 1 }, '<')
-        .fromTo('.pin-mid', { xPercent: 34, yPercent: 14, scale: .68, opacity: .2 }, { xPercent: -18, yPercent: -9, scale: 1.14, opacity: 1, duration: 1 }, '<')
-        .fromTo('.pin-card', { xPercent: 125, rotate: 12, opacity: 0 }, { xPercent: 0, rotate: -5, opacity: 1, duration: 1 })
-        .to('.pin-word', { scale: 1.3, xPercent: -18, duration: 1 })
-        .to('.pin-card', { xPercent: -35, rotate: 9, duration: 1 }, '<')
-        .to('.pin-route', { opacity: 1, y: 0, duration: .6 });
-    }, scope);
-    return () => ctx.revert();
+    let active = true;
+    let context;
+    import('./motion.js').then(({ gsap, ScrollTrigger }) => {
+      if (!active || !scope.current) return;
+      context = gsap.context(() => {
+        const timeline = gsap.timeline({ scrollTrigger: { trigger: scope.current, start: 'top top', end: '+=2200', scrub: 1, pin: true } });
+        timeline.fromTo('.pin-bg', { scale: .72, xPercent: -12, opacity: .25 }, { scale: 1.5, xPercent: 10, opacity: 1, duration: 1 })
+          .fromTo('.pin-word', { scale: .52, y: 120, rotateX: 58, opacity: 0 }, { scale: 1, y: 0, rotateX: 0, opacity: 1, duration: 1 }, '<')
+          .fromTo('.pin-orbit', { rotation: -95, scale: .3 }, { rotation: 38, scale: 1.45, duration: 1 }, '<')
+          .fromTo('.pin-mid', { xPercent: 34, yPercent: 14, scale: .68, opacity: .2 }, { xPercent: -18, yPercent: -9, scale: 1.14, opacity: 1, duration: 1 }, '<')
+          .fromTo('.pin-card', { xPercent: 125, rotate: 12, opacity: 0 }, { xPercent: 0, rotate: -5, opacity: 1, duration: 1 })
+          .to('.pin-word', { scale: 1.3, xPercent: -18, duration: 1 })
+          .to('.pin-card', { xPercent: -35, rotate: 9, duration: 1 }, '<')
+          .to('.pin-route', { opacity: 1, y: 0, duration: .6 });
+      }, scope);
+      ScrollTrigger.refresh();
+    }).catch((error) => console.error('Portfolio motion could not load', error));
+    return () => { active = false; context?.revert(); };
   }, [reduced]);
   return <section ref={scope} className="cinematic-section" aria-label="Build, break, learn, rebuild story"><div className="cinematic-stage"><div className="pin-bg"/><div className="pin-mid"/><div className="pin-orbit"/><div className="pin-word-wrap"><span className="eyebrow eyebrow--light">A PRACTICAL LOOP</span><h2 className="pin-word">Make it<br/><em>understandable.</em></h2></div><div className="pin-card"><span>THE NEXT MOVE</span><b>REBUILD</b><small>use what the investigation reveals</small></div><p className="pin-route">I build, test, investigate, and improve until the next decision is clearer.</p></div></section>;
 }
@@ -381,47 +408,62 @@ function Header() {
 }
 
 function SocialLinks({ compact = false }) {
-  return <div className={`social-links ${compact ? 'social-links--compact' : ''}`} aria-label="Social profiles">{socialLinks.map((link) => <a key={link.label} href={link.href} target={link.href.startsWith('mailto:') ? undefined : '_blank'} rel={link.href.startsWith('mailto:') ? undefined : 'noreferrer'} aria-label={`Open ${link.label}`}><span>{link.label}</span><ArrowUpRight size={14}/></a>)}</div>;
+  return <div className={`social-links ${compact ? 'social-links--compact' : ''}`} aria-label="Social profiles">{socialLinks.map(({ label, href, Icon }) => <a key={label} href={href} target={href.startsWith('mailto:') ? undefined : '_blank'} rel={href.startsWith('mailto:') ? undefined : 'noreferrer'} aria-label={label === 'Email' ? 'Email Alpheaus Daniel' : `Open ${label} profile`}><Icon size={14} aria-hidden="true"/><span>{label}</span><ArrowUpRight size={14} aria-hidden="true"/></a>)}</div>;
 }
-
 function ResumeAction() {
-  return assetConfig.resume.available ? <a className="resume-action" href={assetConfig.resume.path} download="Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf"><FileText size={15}/> Download Resume <ArrowUpRight size={14}/></a> : null;
+  return assetConfig.resume.available ? <a className="resume-action" href={assetConfig.resume.path} download="Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf"><FileText size={15}/> Download CV <ArrowUpRight size={14}/></a> : null;
 }
 
 function Footer() {
   return <footer className="site-footer"><svg className="footer-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50 C160 6 270 80 430 42 S720 4 890 42 S1180 80 1440 28 V80 H0 Z"/></svg><div className="footer-top"><div><p className="eyebrow eyebrow--light">Coach Logic / 2026</p><p className="footer-note">A developer portfolio built around useful systems, honest evidence, and a little spatial thinking.</p><ResumeAction/></div><TransitionLink to="/contact" className="footer-cta">Start a thoughtful conversation <ArrowUpRight size={28}/></TransitionLink></div><div className="footer-grid"><div><span>EXPLORE</span><TransitionLink to="/work">Selected work <ArrowUpRight size={14}/></TransitionLink><TransitionLink to="/engineering">Engineering notes <ArrowUpRight size={14}/></TransitionLink></div><div><span>CONNECT</span><SocialLinks compact/></div><div><span>STATUS</span><p>Available for thoughtful product, tool, and interface work.</p></div></div><div className="footer-bottom"><span>Build. Break. Learn. Rebuild.</span><span>Made with React / Three / GSAP</span></div></footer>;
 }
 
-const pageMetadata = {
-  '/': ['Coach Logic — Software Developer & Toolmaker', 'Coach Logic is a software developer and Computer Engineering student building web applications, developer tools, and code-quality experiments.'],
-  '/work': ['Selected Work — Coach Logic', 'Explore Coach Logic’s web applications, developer tools, and interface projects, with clear project status and links to live work and source repositories.'],
-  '/engineering': ['Engineering Notes — Coach Logic', 'Developer tools and engineering work by Coach Logic, spanning observability, telemetry, code quality, architecture, and debugging.'],
-  '/about': ['About Coach Logic — Software Developer', 'Meet Coach Logic, a software developer and Computer Engineering student focused on web applications, backend systems, developer tools, and practical software investigation.'],
-  '/contact': ['Contact Coach Logic', 'Contact Coach Logic about thoughtful product work, developer tools, and collaborations. Find verified social profiles and download the resume.'],
-};
-
 function Layout({ children }) {
   const location = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' });
-    requestAnimationFrame(() => ScrollTrigger.refresh());
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    const hash = location.hash;
+    const frames = new Set();
+    const schedule = (callback) => {
+      const frameId = window.requestAnimationFrame(() => { frames.delete(frameId); callback(); });
+      frames.add(frameId);
+      return frameId;
+    };
+    const scrollToDestination = () => {
+      let target = null;
+      if (hash.length > 1) { try { target = document.getElementById(decodeURIComponent(hash.slice(1))); } catch { target = null; } }
+      if (target) target.scrollIntoView({ block: 'start', behavior: 'instant' });
+      else window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    };
+    schedule(() => {
+      scrollToDestination();
+      if (hash) schedule(scrollToDestination);
+    });
     const path = location.pathname.replace(/\/+$/, '') || '/';
-    const slug = path.startsWith('/work/') ? path.split('/')[2] : null;
-    const project = slug ? projects[slug] : null;
-    const [title, description] = pageMetadata[path] || (project
-      ? [`${project.name} — Coach Logic`, `${project.description} Current status: ${project.status}.`]
-      : ['Page Not Found — Coach Logic', 'The requested Coach Logic portfolio page could not be found.']);
-    const canonicalPath = path === '/' ? '' : `${path.slice(1)}/`;
-    const canonicalUrl = new URL(`${import.meta.env.BASE_URL}${canonicalPath}`, window.location.origin).href;
-    document.title = title;
-    document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+    const seo = getRouteSeo(path);
+    const canonicalUrl = getCanonicalUrl(path);
+    document.title = seo.title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', seo.description);
+    document.querySelector('meta[name="robots"]')?.setAttribute('content', seo.noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
     document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonicalUrl);
-    document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
-    document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+    document.querySelector('meta[property="og:type"]')?.setAttribute('content', seo.type);
+    document.querySelector('meta[property="og:site_name"]')?.setAttribute('content', 'Alpheaus Daniel — Developer Portfolio');
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', seo.title);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', seo.description);
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonicalUrl);
-    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title);
-    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', description);
-  }, [location.pathname]);
+    document.querySelector('meta[property="og:image"]')?.setAttribute('content', OG_IMAGE_URL);
+    document.querySelector('meta[property="og:image:alt"]')?.setAttribute('content', OG_IMAGE_ALT);
+    document.querySelector('meta[name="twitter:card"]')?.setAttribute('content', 'summary_large_image');
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', seo.title);
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', seo.description);
+    document.querySelector('meta[name="twitter:image"]')?.setAttribute('content', OG_IMAGE_URL);
+    document.querySelector('meta[name="twitter:image:alt"]')?.setAttribute('content', OG_IMAGE_ALT);
+    const routeSchema = document.getElementById('route-schema');
+    if (routeSchema) routeSchema.textContent = JSON.stringify(getRouteStructuredData(path));
+    return () => {
+      frames.forEach((frameId) => window.cancelAnimationFrame(frameId));
+    };
+  }, [location.pathname, location.hash]);
   return <><a className="skip-link" href="#main-content">Skip to content</a><Splash/><CursorField/><ScrollProgress/><Header/><MotionPage><div id="main-content">{children}</div></MotionPage><Footer/></>;
 }
 
@@ -430,26 +472,26 @@ function Button({ to, children }) { return <TransitionLink to={to} className="bu
 function External({ href, children, className = '' }) { return <a href={href} target="_blank" rel="noreferrer" className={`text-link ${className}`}>{children}<ArrowUpRight size={15}/></a>; }
 function Tags({ items }) { return <div className="tags">{items.map((item) => <span key={item}>{item}</span>)}</div>; }
 
-function LiveSurface({ project, large = false }) {
+function LiveSurface({ project, large = false, showLink = true }) {
   const [loaded, setLoaded] = useState(false);
-  return <div className={`product-surface ${large ? 'product-surface--large' : ''}`} data-parallax><div className="product-surface__bar"><span>LIVE PRODUCT SURFACE</span><span>{project.status}</span></div><div className="product-surface__viewport"><iframe title={`${project.name} live preview`} src={project.href} loading="lazy" onLoad={() => setLoaded(true)} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/><div className={`surface-fallback ${loaded ? 'is-loaded' : ''}`}><span>{project.name}</span><small>Open the live site for the complete experience</small></div></div><div className="product-surface__foot"><span>{project.evidence}</span><External href={project.href}>Open live surface</External></div></div>;
+  return <div className={`product-surface ${large ? 'product-surface--large' : ''}`} data-parallax><div className="product-surface__bar"><span>LIVE PRODUCT SURFACE</span><span>{project.status}</span></div><div className="product-surface__viewport"><iframe title={`${project.name} live preview`} src={project.href} loading="lazy" onLoad={() => setLoaded(true)} sandbox="allow-scripts allow-same-origin allow-forms allow-popups"/><div className={`surface-fallback ${loaded ? 'is-loaded' : ''}`}><span>{project.name}</span><small>Open the live site for the complete experience</small></div></div><div className="product-surface__foot"><span>{project.evidence}</span>{showLink && <External href={project.href}>Open live surface</External>}</div></div>;
 }
 
-function TerminalSurface({ project }) {
-  return <div className="product-surface product-surface--terminal" data-parallax><div className="product-surface__bar"><span>REPOSITORY SURFACE</span><span>{project.status}</span></div><div className="terminal-preview"><span>$ inspect --project {project.name}</span><b>{project.type}</b><p>{project.description}</p><span className="terminal-line">process.tree / event.timeline / source.protected</span><span className="terminal-cursor" aria-hidden="true">▋</span></div><div className="product-surface__foot"><span>{project.evidence}</span><External href={project.href}>Open repository</External></div></div>;
+function TerminalSurface({ project, showLink = true }) {
+  return <div className="product-surface product-surface--terminal" data-parallax><div className="product-surface__bar"><span>REPOSITORY SURFACE</span><span>{project.status}</span></div><div className="terminal-preview"><span>$ inspect --project {project.name}</span><b>{project.type}</b><p>{project.description}</p><span className="terminal-line">process.tree / event.timeline / source.protected</span><span className="terminal-cursor" aria-hidden="true">▋</span></div><div className="product-surface__foot"><span>{project.evidence}</span>{showLink && <External href={project.href}>Open repository</External>}</div></div>;
 }
 
-function ProjectVisual({ project, large = false }) { return project.href.includes('github.com') ? <TerminalSurface project={project}/> : <LiveSurface project={project} large={large}/>; }
+function ProjectVisual({ project, large = false, showLink = true }) { return project.href.includes('github.com') ? <TerminalSurface project={project} showLink={showLink}/> : <LiveSurface project={project} large={large} showLink={showLink}/>; }
 
 function Home() {
-  const process = [['01', 'Build', 'Make a useful first shape.'], ['02', 'Break', 'Test the assumption.'], ['03', 'Learn', 'Keep the signal.'], ['04', 'Rebuild', 'Return with a clearer structure.']];
+  const process = [['01', 'Build', 'Start with a real problem and make the smallest useful version. Define what the tool should do, build the essential path, and make the result observable enough to test.'], ['02', 'Break', 'Challenge the assumptions behind the implementation. Try invalid inputs, awkward edge cases, unexpected states, and interactions that reveal where the design or logic fails.'], ['03', 'Learn', 'Trace the failure instead of hiding it. Inspect the relevant code, follow the data, compare expected and actual behavior, and identify the underlying cause.'], ['04', 'Rebuild', 'Apply the lesson to the implementation. Correct the root cause, simplify where possible, and verify that the fix works without breaking existing behavior.']];
   const featured = ['mouaec', 'telica', 'agenttrace'];
   return <main className="home"><HeroScene/><CinematicPin/><section className="philosophy-scene"><div className="section-grid"><div><Eyebrow>01 / Philosophy</Eyebrow><h2 className="display-title" data-reveal>Make the first useful <em>shape.</em></h2></div><p className="section-intro" data-reveal>Build, break, learn, rebuild. The loop is not a slogan; it is the way a system becomes understandable.</p></div><div className="process-rail" data-reveal>{process.map(([number, name, copy]) => <div className={`process-step process-step--${number}`} key={name}><span>{number}</span><strong><ScrambleText>{name}</ScrambleText></strong><p>{copy}</p></div>)}</div></section><section className="featured-scene"><div className="section-grid"><div><Eyebrow>02 / Selected work</Eyebrow><h2 className="display-title" data-reveal>Small projects.<br/><em>Real reasons.</em></h2></div><p className="section-intro" data-reveal>Preview the product surface. Open a study when you want the problem, decisions, current status, and verified destination.</p></div><div className="featured-project" data-reveal><ProjectVisual project={projects.aster} large/><div className="featured-project__copy"><span className="eyebrow">01 / Technology intelligence platform</span><h3><ScrambleText>Aster</ScrambleText></h3><p>Explore what technologies do, compare their tradeoffs, and understand how the ecosystem connects.</p><Tags items={projects.aster.stack.slice(0, 4)}/><TransitionLink to="/work/aster" className="text-link">Open the Aster study <ArrowUpRight size={15}/></TransitionLink></div></div><div className="mini-work-grid">{featured.map((slug, index) => <TransitionLink key={slug} to={`/work/${slug}`} className="mini-work-card" data-reveal><span className="eyebrow">0{index + 2} / {projects[slug].type}</span><h3><ScrambleText>{projects[slug].name}</ScrambleText></h3><p>{projects[slug].description}</p><span className="mini-work-card__arrow"><ArrowUpRight size={17}/></span></TransitionLink>)}</div></section><section className="timeline-scene"><div className="section-grid"><div><Eyebrow light>03 / Practice timeline</Eyebrow><h2 className="display-title display-title--light" data-reveal>Keep the work<br/><em>close to reality.</em></h2></div><p className="section-intro section-intro--light" data-reveal>Mentorship, interface craft, and developer tools share the same test: does the system help someone make a better next move?</p></div><FlowTimeline/></section></main>;
 }
 
 function Work() {
   const groups = [['Developer tools & observability', ['agenttrace', 'nativerelay', 'cleaner']], ['Web applications & platforms', ['aster', 'mouaec']], ['Websites & registration', ['telica', 'axial']]];
-  return <main className="route-page"><div className="route-heading"><div><Eyebrow>04 / Selected work · Project index</Eyebrow><h1 className="display-title" data-reveal>Work with<br/><em>a reason.</em></h1></div><p className="section-intro" data-reveal>Concise surfaces first. Open a study when you want the problem, decisions, current status, and verified destination.</p></div><div className="work-groups">{groups.map(([group, slugs]) => <section className="work-group" key={group}><div className="work-group__head"><Eyebrow>{group}</Eyebrow><span>{slugs.length} {slugs.length === 1 ? 'project' : 'projects'}</span></div><div className="work-list">{slugs.map((slug, index) => { const project = projects[slug]; return <article className="work-row" key={slug} data-reveal><TransitionLink to={`/work/${slug}`} className="work-row__visual" style={{ viewTransitionName: `project-${slug}` }}><ProjectVisual project={project}/></TransitionLink><div className="work-row__copy"><div className="work-meta"><span>{project.type}</span><span>{project.status}</span></div><h2><ScrambleText>{project.name}</ScrambleText></h2><p>{project.description}</p><Tags items={project.stack.slice(0, 4)}/><div className="work-row__links"><TransitionLink to={`/work/${slug}`} className="text-link">Read project study <ArrowUpRight size={15}/></TransitionLink><External href={project.href}>{project.href.includes('github.com') ? 'Open repository' : 'Open live website'}</External>{project.repo && <External href={project.repo}>Open repository</External>}</div></div></article>; })}</div></section>)}</div></main>;
+  return <main className="route-page"><div className="route-heading"><div><Eyebrow>04 / Selected work · Project index</Eyebrow><h1 className="display-title" data-reveal>Work with<br/><em>a reason.</em></h1></div><p className="section-intro" data-reveal>I build web applications, practical digital products, and developer tools that solve concrete problems. My work spans frontend experiences, backend APIs, database-backed systems, and the debugging that makes them more dependable. I care about how software behaves after the first successful render: how it handles real interactions, how its parts fit together, and how clearly another developer can understand it.</p></div><div className="work-groups">{groups.map(([group, slugs]) => <section className="work-group" key={group}><div className="work-group__head"><Eyebrow>{group}</Eyebrow><span>{slugs.length} {slugs.length === 1 ? 'project' : 'projects'}</span></div><div className="work-list">{slugs.map((slug, index) => { const project = projects[slug]; return <article className="work-row" key={slug} data-reveal><div className="work-row__visual" style={{ viewTransitionName: `project-${slug}` }}><ProjectVisual project={project} showLink={false}/></div><div className="work-row__copy"><div className="work-meta"><span>{project.type}</span><span>{project.status}</span></div><h2><ScrambleText>{project.name}</ScrambleText></h2><p>{project.description}</p><Tags items={project.stack.slice(0, 4)}/><div className="work-row__links"><TransitionLink to={`/work/${slug}`} className="text-link">Read project study <ArrowUpRight size={15}/></TransitionLink><External href={project.href}>{project.href.includes('github.com') ? 'Open repository' : 'Open live website'}</External>{project.repo && <External href={project.repo}>Open repository</External>}</div></div></article>; })}</div></section>)}</div></main>;
 }
 
 function Metrics({ active, setActive }) {
@@ -583,12 +625,24 @@ function AsterStudy() {
   );
 }
 
-function Engineering() { return <main className="route-page route-page--paper"><div className="route-heading"><div><Eyebrow>05 / Engineering · The systems room</Eyebrow><h1 className="display-title" data-reveal>Make the<br/><em>invisible legible.</em></h1></div><p className="section-intro" data-reveal>Observability, architecture, debugging, and the small choices that make software easier to trust.</p></div><div className="engineering-grid">{[['AgentTrace', 'See the process, not just the result.', '/work/agenttrace'], ['NativeRelay', 'Normalize the signal.', '/work/nativerelay'], ['Cleaner', 'Protect the source.', '/work/cleaner']].map(([title, copy, to], index) => <TransitionLink to={to} className="engineering-card" key={title} data-reveal><span>0{index + 1} / SYSTEMS</span><h2>{title}</h2><p>{copy}</p><b>Explore <ArrowUpRight size={15}/></b></TransitionLink>)}</div></main>; }
-function About() { const philosophy = [['BUILD', 'Start with something real.', 'I prefer to turn an idea into a working first version. I focus on the essential path, make the important assumptions visible, and create something I can actually test.'], ['BREAK', 'Challenge what I built.', 'A successful first run does not prove that an implementation is reliable. I look for edge cases, unexpected states, fragile assumptions, and places where the result differs from what I intended.'], ['LEARN', 'Find the reason.', 'When something fails, I want to understand why. I follow the data, inspect the relevant code, compare expected and actual behavior, and look for the underlying cause instead of hiding the symptom.'], ['REBUILD', 'Apply what I learned.', 'I use what the investigation reveals to improve the implementation. That may mean correcting a root cause, simplifying a design, or changing an assumption. Then I verify the result.']]; return <main className="about-page"><section className="about-intro route-page"><div className="route-heading"><div><Eyebrow>06 / About · Who I am</Eyebrow><h1 className="display-title" data-reveal>The person<br/>behind the <em>work.</em></h1></div><p className="section-intro" data-reveal>I’m a software developer and Computer Engineering student who likes understanding what happens beneath the surface of the things I build. I work across web applications, backend systems, and developer tools, moving between creating something new and investigating why an existing implementation behaves the way it does.</p></div><div className="about-profile" data-reveal><div className="profile-photo-slot">{assetConfig.profilePhoto.available ? <img src={assetConfig.profilePhoto.path} alt="Coach Logic"/> : null}</div><div className="about-profile__copy"><p>My projects have taught me that getting something to work is only the beginning. I care about the decisions behind it, how its different parts fit together, how it responds to real use, and whether another developer can understand and maintain it.</p><p>I’ve also spent time teaching and building alongside other learners. Through LogicLabs Academy, I helped create a software-learning community that served more than 200 students. That experience reinforced my belief that learning becomes more valuable when people can build, question, share, and improve things together.</p><ResumeAction/><SocialLinks/></div></div></section><section className="about-thinking"><div className="about-thinking__inner"><div className="about-thinking__heading"><Eyebrow light>How I think</Eyebrow><h2 className="display-title display-title--light" data-reveal>Build.<br/><em>Break. Learn. Rebuild.</em></h2><p>Working across web applications and developer tools means staying close to the evidence: make a useful version, test it honestly, and let the investigation change the next version.</p></div><div className="about-philosophy" data-reveal>{philosophy.map(([label, title, copy], index) => <article className={`about-philosophy__step about-philosophy__step--${index + 1}`} key={label}><span>0{index + 1} / {label}</span><h3>{title}</h3><p>{copy}</p></article>)}</div></div></section><section className="about-history route-page"><div className="route-heading"><div><Eyebrow>03 / Selected chapters</Eyebrow><h2 className="display-title" data-reveal>Where the<br/><em>practice grew.</em></h2></div><p className="section-intro" data-reveal>Teaching, unfinished ideas, and live interface work have each shaped how I make and inspect software.</p></div><FlowTimeline/></section></main>; }
+function Engineering() {
+  const systems = [
+    { name: 'AgentTrace', focus: 'AI coding-agent observability', status: projects.agenttrace.status, href: projects.agenttrace.href, description: "Explores how developers can observe running AI coding-agent processes and inspect process activity through a more unified workflow. Its focus is visibility into agent processes and recorded activity—not claims of access to an agent's private reasoning or every internal action.", problem: 'Agent activity can be difficult to inspect when process state and recorded events are scattered across tools.', approach: 'Follow the running processes and their recorded activity through one inspectable workflow.' },
+    { name: 'Cleaner', focus: 'Local-first code cleaning', status: projects.cleaner.status, href: projects.cleaner.href, description: 'Explores how code-cleaning operations can be made more practical and safer to use, with an emphasis on preserving the original source by default and avoiding transformations that remove code still in use.', problem: 'Cleaning code can be risky when a transformation changes the source in place or removes code that is still needed.', approach: 'Keep the workflow local-first and write cleaned output separately from the original source by default.' },
+    { name: 'NativeRelay', focus: 'Native system observations', status: projects.nativerelay.status, href: projects.nativerelay.href, description: 'Explores local-first collection and normalization of native system events so that low-level process and file observations can be represented in a consistent, inspectable format.', problem: 'Low-level process and file activity is difficult to compare when observations arrive in different native formats.', approach: 'Explore a consistent, inspectable representation for local process and file observations.' },
+  ];
+  return <main className="route-page route-page--paper"><div className="route-heading"><div><Eyebrow>05 / Engineering · The systems room</Eyebrow><h1 className="display-title" data-reveal>Make the<br/><em>invisible legible.</em></h1></div><p className="section-intro" data-reveal>I’m interested in the systems behind the code: how tools observe activity, how small implementation decisions affect reliability, and how developers can understand what software is actually doing. My developer-tool experiments explore code cleaning, AI coding-agent visibility, and native system observations. Each project approaches a different part of the problem, with an emphasis on practical insight rather than unnecessary complexity.</p></div><section className="systems-intro" aria-labelledby="systems-intro-title"><span className="eyebrow">One question / Three investigations</span><h2 id="systems-intro-title" className="display-title" data-reveal>Make behavior<br/><em>easier to inspect.</em></h2><p>These projects investigate different ways to make software behavior, code transformations, and system activity easier to inspect.</p></section><div className="systems-studies">{systems.map((system, index) => <article className="systems-study" key={system.name} data-reveal><header className="systems-study__header"><div><span className="eyebrow">0{index + 1} / {system.focus}</span><h2>{system.name}</h2></div><span className="systems-study__status">{system.status}</span></header><div className="systems-study__grid"><div><span>PROBLEM</span><p>{system.problem}</p></div><div><span>APPROACH / PROJECT FOCUS</span><p>{system.description}</p></div><div><span>IMPLEMENTATION DIRECTION</span><p>{system.approach}</p></div></div><External href={system.href}>View {system.name} repository</External></article>)}</div></main>;
+}
+function About() { const philosophy = [['BUILD', 'Create something testable.', 'Start with a real problem and make the smallest useful version. Define what the tool should do, build the essential path, and make the result observable enough to test.'], ['BREAK', 'Challenge the assumptions.', 'Challenge the assumptions behind the implementation. Try invalid inputs, awkward edge cases, unexpected states, and interactions that reveal where the design or logic fails.'], ['LEARN', 'Find the underlying cause.', 'Trace the failure instead of hiding it. Inspect the relevant code, follow the data, compare expected and actual behavior, and identify the underlying cause.'], ['REBUILD', 'Improve without regressions.', 'Apply the lesson to the implementation. Correct the root cause, simplify where possible, and verify that the fix works without breaking existing behavior.']]; return <main className="about-page"><section className="about-intro route-page"><div className="route-heading"><div><Eyebrow>06 / About · Who I am</Eyebrow><h1 className="display-title" data-reveal>The person<br/>behind the <em>work.</em></h1></div><p className="section-intro" data-reveal>I’m a software developer and Computer Engineering student who enjoys understanding how systems work beneath the surface. I build web applications and developer tools, investigate implementation failures, and experiment with ideas that make software easier to understand and maintain. My approach is practical: build something real, test its assumptions, find what breaks, and improve it through what I learn.</p></div><div className="about-profile" data-reveal><div className="profile-photo-slot" data-photo-missing={assetConfig.profilePhoto.available ? undefined : 'true'}><span className="profile-photo-fallback" aria-hidden="true">Alpheaus Daniel · portrait</span>{assetConfig.profilePhoto.available ? <img src={assetConfig.profilePhoto.path} alt="Alpheaus Daniel" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.parentElement.dataset.photoMissing = 'true'; }}/>: null}</div><div className="about-profile__copy"><p>My projects have taught me that getting something to work is only the beginning. I care about the decisions behind it, how its different parts fit together, how it responds to real use, and whether another developer can understand and maintain it.</p><p>I’ve also spent time teaching and building alongside other learners. Through LogicLabs Academy, I helped create a software-learning community that served more than 200 students. That experience reinforced my belief that learning becomes more valuable when people can build, question, share, and improve things together.</p><ResumeAction/><SocialLinks/></div></div></section><section className="about-thinking"><div className="about-thinking__inner"><div className="about-thinking__heading"><Eyebrow light>How I think</Eyebrow><h2 className="display-title display-title--light" data-reveal>Build.<br/><em>Break. Learn. Rebuild.</em></h2><p>Working across web applications and developer tools means staying close to the evidence: make a useful version, test it honestly, and let the investigation change the next version.</p></div><div className="about-philosophy">{philosophy.map(([label, title, copy], index) => <article className={`about-philosophy__step about-philosophy__step--${index + 1}`} key={label} data-reveal data-reveal-order={index}><span>0{index + 1} / {label}</span><h3>{title}</h3><p>{copy}</p></article>)}</div></div></section><section className="about-history route-page"><div className="route-heading"><div><Eyebrow>03 / Selected chapters</Eyebrow><h2 className="display-title" data-reveal>Where the<br/><em>practice grew.</em></h2></div><p className="section-intro" data-reveal>Teaching, unfinished ideas, and live interface work have each shaped how I make and inspect software.</p></div><FlowTimeline/></section></main>; }
 function Contact() { return <main className="contact-page"><div><Eyebrow light>07 / Contact · Make the next thing clearer</Eyebrow><h1 className="contact-title" data-reveal>Have a system<br/>worth <em>shaping?</em></h1><p className="contact-lede" data-reveal>I’m interested in thoughtful product work, developer tools, and collaborations where the details do real work.</p></div><div className="contact-grid" data-reveal><div><span>CONNECT</span><SocialLinks/></div><div><span>RESUME</span><p>A concise record of selected projects, technical decisions, and experience.</p><ResumeAction/></div><div><span>AXIAL SYSTEMS</span><p>Live landing page; broader work remains in development.</p><External href={projects.axial.href}>Open live website</External><External href={projects.axial.repo}>Open repository</External></div></div></main>; }
 function NotFound() { return <main className="route-page"><Eyebrow>404 / Not found</Eyebrow><h1 className="display-title">This path<br/><em>doesn’t hold.</em></h1><Button to="/">Return home</Button></main>; }
 function ProductDetail({ project, slug }) { const facts = { mouaec: ['Voting that stays auditable', '30-second count refreshes, approved administrator corrections, allowlisted administrator email, frontend checks, and Supabase RLS.', 'Delivered university exercise'], telica: ['A registration flow with a real handoff', 'A focused cohort application path with Web3Forms email notifications and a live registration surface.', 'Live concept'], agenttrace: ['Observe the agent, not an imagined interior', 'Process observability, concurrent agents, process trees, snapshots, watch modes, supervised runs, and event timelines.', 'Repository direction'], nativerelay: ['Normalize native signals', 'A local-first exploration of normalized process and file observations. Implemented and planned capabilities remain distinct.', 'Repository exploration'], cleaner: ['Protect the original by default', 'A local-first code-cleaning CLI that simplifies cleaning workflows and keeps cleaned output separate from the source.', 'Repository / building'] }[slug] || ['A product surface worth inspecting', project.description, project.status]; return <main className="product-study"><section className="product-study__hero"><div className="study-hero__top"><TransitionLink to="/work" className="eyebrow">← Work index</TransitionLink><span className="eyebrow">{project.status}</span></div><div className="product-study__intro"><div><span className="eyebrow">Project study / {slug}</span><h1 className="study-title">{project.name}</h1><p className="study-type">{project.type}</p><p className="study-lede">{project.description}</p><div className="study-actions"><External href={project.href}>{project.href.includes('github') ? 'Open GitHub repository' : 'Open live product'}</External>{project.repo && <External href={project.repo}>Open GitHub repository</External>}</div></div><ProjectVisual project={project} large/></div></section><section className="product-study__body"><div className="product-statement"><span className="eyebrow">Product language / 01</span><h2>{facts[0]}</h2><p>{facts[1]}</p></div><div className="product-facts"><article><span>STATE</span><b>{facts[2]}</b></article><article><span>STACK</span><Tags items={project.stack}/></article><article><span>READ NEXT</span><p>Open the live surface or repository, then return to the work index for the next product.</p></article></div></section></main>; }
-function App() { return <Layout><Routes><Route path="/" element={<Home/>}/><Route path="/work" element={<Work/>}/><Route path="/work/aster" element={<AsterStudy/>}/><Route path="/work/:slug" element={<ProductDetailRoute/>}/><Route path="/engineering" element={<Engineering/>}/><Route path="/about" element={<About/>}/><Route path="/contact" element={<Contact/>}/><Route path="*" element={<NotFound/>}/></Routes></Layout>; }
+export function App() { return <Layout><Routes><Route path="/" element={<Home/>}/><Route path="/work" element={<Work/>}/><Route path="/work/aster" element={<AsterStudy/>}/><Route path="/work/:slug" element={<ProductDetailRoute/>}/><Route path="/engineering" element={<Engineering/>}/><Route path="/about" element={<About/>}/><Route path="/contact" element={<Contact/>}/><Route path="*" element={<NotFound/>}/></Routes></Layout>; }
 function ProductDetailRoute() { const { slug } = useParams(); const project = projects[slug]; return project ? <ProductDetail project={project} slug={slug}/> : <NotFound/>; }
 
-createRoot(document.getElementById('root')).render(<BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}><App/></BrowserRouter>);
+const root = typeof document !== 'undefined' ? document.getElementById('root') : null;
+if (root) {
+  const app = <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}><App/></BrowserRouter>;
+  if (root.firstElementChild || root.textContent.trim()) hydrateRoot(root, app);
+  else createRoot(root).render(app);
+}
