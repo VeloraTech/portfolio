@@ -37,7 +37,7 @@ jobs:
             mkdir -p "dist/$route"
             cp dist/index.html "dist/$route/index.html"
           done
-          for route in aster mouaec telica agenttrace nativerelay cleaner; do
+          for route in aster mouaec telica axial agenttrace nativerelay cleaner; do
             mkdir -p "dist/work/$route"
             cp dist/index.html "dist/work/$route/index.html"
           done
