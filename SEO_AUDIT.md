@@ -94,3 +94,13 @@ This is a local smoke test, not a field Core Web Vitals measurement. Lighthouse,
 
 
 A mobile Chromium capture at 390×844 initially exposed a horizontal scrollbar on the homepage. The cause was addressed with root `overflow-x: hidden` while preserving the existing responsive composition; the follow-up capture no longer exposed horizontal scrolling. This is a local responsive smoke check, not a substitute for field-device testing.
+
+
+## 2026-10-14 restore and repair pass
+
+- Git history identified commit `3293a56` as the pre-regression globe implementation and commit `8ffc314` as the later implementation that reduced hero zoom from `1.46` to `1.08` and changed the label treatment. The scroll-linked desktop globe motion was restored from the earlier values without resetting unrelated identity or SEO work.
+- The globe retains its circular rings, orbital axes, four practice nodes, HTML descriptions, hover/focus states, and scroll-linked zoom. Coarse-pointer devices keep the lower-cost static globe fallback but can select BUILD, BREAK, LEARN, and REBUILD through visible touch-sized controls; the selected fallback node is highlighted.
+- Mobile hero zoom uses a reduced responsive scale while desktop restores the known-good depth movement. Reduced-motion users still receive the static scene, labels, content, and links without the continuous Three.js scene or GSAP scroll motion.
+- The timeline now uses a single-column mobile layout below 900px, with an aligned vertical connector and markers, natural wrapping, a flexible legend, and no fixed card offsets at narrow widths. A 390×5000 Chromium capture showed the three entries stacked inside the viewport without horizontal overflow.
+- LogicLabs Academy now states that Alpheaus Daniel co-founded and worked with the academy and that the relevant period concluded in May 2026. Campus-Link is described as a concept created with collaborators and unfinished. Axial Systems is marked as live/in development without an unsupported employment date.
+- The work and engineering sections continue the editorial structure already present in the branch: grouped project rows, featured evidence, current-status labels, problem/approach/implementation sections, and direct repository/live-surface links. The Idolo reference was used only for this information architecture principle, not for copied design or content.

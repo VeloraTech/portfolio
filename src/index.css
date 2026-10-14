@@ -9,7 +9,7 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --ink: #262923;
-  --ink-soft: rgba(38, 41, 35, .68);
+  --ink-soft: rgba(38, 41, 35, .62);
   --paper: #ebe5d9;
   --canvas: #f4f0e8;
   --white: #fffaf1;
@@ -71,7 +71,7 @@ button { font: inherit; }
 .mobile-nav span { color: var(--lilac); }
 
 .eyebrow { margin: 0; color: var(--ink-soft); font: 500 .59rem var(--mono); letter-spacing: .14em; line-height: 1.4; text-transform: uppercase; }
-.eyebrow--light { color: rgba(255, 250, 241, .64); }
+.eyebrow--light { color: rgba(255, 250, 241, .58); }
 .display-title { margin: 0; font: 500 clamp(3.8rem, 8.6vw, 9rem) /.85 var(--display); letter-spacing: -.1em; }
 .display-title em, .hero-title em, .study-title em, .contact-title em { color: var(--lichen); font-style: italic; }
 .display-title--light { color: var(--white); }
@@ -103,24 +103,25 @@ button { font: inherit; }
 .fallback-orbit { position: absolute; border: 1px solid rgba(38, 41, 35, .28); border-radius: 50%; }
 .fallback-orbit--one { inset: 5%; transform: rotate(34deg) skew(8deg); }
 .fallback-orbit--two { inset: 23%; transform: rotate(-24deg) skew(-8deg); }
-.fallback-point { position: absolute; display: inline-flex; align-items: center; border: 1px solid rgba(38, 41, 35, .22); border-radius: 2px; padding: .22rem .38rem; background: rgba(255, 250, 241, .96); box-shadow: 0 4px 14px rgba(38, 41, 35, .12); color: var(--ink); font: .56rem var(--mono); letter-spacing: .08em; }
+.fallback-point { position: absolute; color: var(--ink-soft); font: .56rem var(--mono); letter-spacing: .08em; }
 .fallback-point--one { right: -2%; top: 24%; color: var(--lichen-dark); }
 .fallback-point--two { left: -3%; top: 42%; color: var(--oxide); }
 .fallback-point--three { right: 16%; bottom: 5%; color: #7e709b; }
 .fallback-point--four { left: 7%; bottom: 16%; }
+.fallback-point.is-active { z-index: 2; color: var(--ink); text-decoration: underline; text-decoration-color: var(--lichen); text-underline-offset: .22em; transform: translateY(-2px); }
 .hero-stage__label { position: absolute; z-index: 5; color: var(--ink-soft); font: .55rem var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .hero-stage__label--top { top: 11%; right: 2%; }
 .hero-stage__label--bottom { bottom: 10%; left: 4%; }
 .hero-annotations { position: absolute; z-index: 6; right: 0; bottom: 14%; display: grid; gap: .35rem; width: 11rem; }
-.hero-annotations button { display: grid; gap: .15rem; border: 1px solid rgba(38, 41, 35, .22); border-left: 3px solid var(--lichen-dark); border-radius: 2px; padding: .3rem .6rem; background: rgba(255, 250, 241, .96); box-shadow: 0 5px 16px rgba(38, 41, 35, .14); backdrop-filter: blur(8px); color: var(--ink); text-align: left; cursor: pointer; transition: border-color .2s ease, color .2s ease, background .2s ease, transform .2s ease; }
-.hero-annotations button:hover, .hero-annotations button.is-active { border-color: var(--lichen); background: var(--white); color: var(--ink); transform: translateX(-4px); }
+.hero-annotations button { display: grid; gap: .15rem; border: 0; border-left: 1px solid rgba(38, 41, 35, .2); padding: .3rem .6rem; background: transparent; color: var(--ink-soft); text-align: left; cursor: pointer; transition: border-color .2s ease, color .2s ease, transform .2s ease; }
+.hero-annotations button:hover, .hero-annotations button.is-active { border-color: var(--lichen); color: var(--ink); transform: translateX(-4px); }
 .hero-annotations span { font: 500 .58rem var(--mono); letter-spacing: .1em; }
 .hero-annotations small { font-size: .63rem; line-height: 1.35; }
-.hero-annotations p { width: max-content; max-width: 100%; margin: .55rem 0 0; border-left: 2px solid var(--oxide); padding: .42rem .6rem; background: rgba(38, 41, 35, .92); box-shadow: 0 5px 16px rgba(38, 41, 35, .16); color: var(--white); font: .55rem var(--mono); line-height: 1.5; }
-.scene-tooltip { display: grid; gap: .18rem; min-width: 7.4rem; max-width: 10rem; border: 1px solid rgba(255, 250, 241, .78); border-radius: 2px; padding: .5rem .6rem; background: rgba(38, 41, 35, .96); box-shadow: 0 7px 22px rgba(38, 41, 35, .3); color: var(--white); opacity: 0; transform: translateY(5px); transition: opacity .18s ease, transform .18s ease; }
+.hero-annotations p { margin: .55rem 0 0; color: var(--ink-soft); font: .55rem var(--mono); line-height: 1.5; }
+.scene-tooltip { display: grid; gap: .18rem; min-width: 7.4rem; padding: .5rem .6rem; border: 1px solid rgba(38, 41, 35, .16); background: rgba(255, 250, 241, .9); color: var(--ink); opacity: 0; transform: translateY(5px); transition: opacity .18s ease, transform .18s ease; }
 .scene-tooltip.is-visible { opacity: 1; transform: translateY(0); }
-.scene-tooltip b { color: var(--white); font: 500 .55rem var(--mono); letter-spacing: .1em; }
-.scene-tooltip small { color: rgba(255, 250, 241, .88); font: .58rem var(--mono); line-height: 1.35; }
+.scene-tooltip b { font: 500 .55rem var(--mono); letter-spacing: .08em; }
+.scene-tooltip small { color: var(--ink-soft); font: .58rem var(--mono); line-height: 1.35; }
 .hero-depth { position: absolute; z-index: 1; pointer-events: none; border-radius: 50%; }
 .hero-depth--back { right: -8%; top: 17%; width: 42vw; height: 42vw; max-width: 620px; max-height: 620px; background: radial-gradient(circle at 35% 40%, rgba(170, 160, 198, .23), transparent 65%); filter: blur(8px); }
 .hero-depth--mid { right: 28%; bottom: 5%; width: 28vw; height: 28vw; max-width: 430px; max-height: 430px; background: radial-gradient(circle, rgba(113, 131, 104, .15), transparent 68%); filter: blur(12px); }
@@ -192,7 +193,7 @@ button { font: inherit; }
 .timeline-scene { background: var(--ink); color: var(--white); }
 .timeline-scene .section-intro { color: rgba(255, 250, 241, .64); }
 .experience-map { position: relative; width: min(1200px, 100%); margin: 7rem auto 0; }
-.experience-map__legend { position: relative; z-index: 2; display: flex; justify-content: space-between; color: rgba(255, 250, 241, .58); font: .58rem var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.experience-map__legend { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem 2rem; justify-content: space-between; color: rgba(255, 250, 241, .58); font: .58rem var(--mono); letter-spacing: .1em; text-transform: uppercase; }
 .experience-map__stage { position: relative; min-height: 1000px; margin-top: 1.5rem; }
 .timeline-curve { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; overflow: hidden; }
 .experience-map__tube, .experience-map__liquid { fill: none; stroke-linecap: round; stroke-width: 2; }
@@ -200,7 +201,7 @@ button { font: inherit; }
 .experience-map__liquid { stroke: var(--lichen); stroke-width: 5; stroke-dasharray: 1; transition: stroke-dashoffset .1s linear; }
 .experience-map__marker { fill: var(--oxide); stroke: var(--white); stroke-width: 4; }
 .experience-map__list { position: absolute; inset: 0; z-index: 1; margin: 0; padding: 0; list-style: none; }
-.experience-card { position: absolute; width: min(29rem, 34%); border-top: 1px solid rgba(255, 250, 241, .22); padding-top: 1rem; }
+.experience-card { position: absolute; min-width: 0; width: min(29rem, 34%); overflow-wrap: anywhere; border-top: 1px solid rgba(255, 250, 241, .22); padding-top: 1rem; }
 .experience-card__date { display: block; color: var(--lilac); font: .56rem/1.5 var(--mono); letter-spacing: .1em; }
 .experience-card h3 { margin: .9rem 0 .6rem; color: var(--white); font: 500 clamp(2rem, 4vw, 3.8rem) /.9 var(--display); letter-spacing: -.1em; }
 .experience-card p { margin: 0; color: rgba(255, 250, 241, .6); font-size: .75rem; line-height: 1.7; }
@@ -434,6 +435,8 @@ button { font: inherit; }
   .hero-title { font-size: clamp(3.5rem, 16vw, 6.8rem); }
   .hero-lede { margin-top: 1.8rem; font-size: .9rem; }
   .hero-stage { width: min(100%, 500px); margin-top: 1rem; }
+  .hero-stage--front { transform-origin: center center; }
+  .experience-map__legend { justify-content: flex-start; }
   .hero-annotations { right: 0; bottom: 8%; width: 9rem; }
   .hero-annotations button { padding: .22rem .45rem; }
   .hero-stage__label--top { top: 6%; }

@@ -257,6 +257,7 @@ function MotionPage({ children }) {
     if (!scope.current || reduced) return undefined;
     import('./motion.js').then(({ gsap, ScrollTrigger }) => {
       if (!active || !scope.current) return;
+      const compact = window.matchMedia('(max-width: 720px)').matches;
       context = gsap.context(() => {
         gsap.utils.toArray('[data-reveal]').forEach((element) => gsap.fromTo(element, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: .8, delay: Number(element.dataset.revealOrder || 0) * .11, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 84%', once: true } }));
         gsap.utils.toArray('[data-parallax]').forEach((element) => gsap.to(element, { yPercent: -12, ease: 'none', scrollTrigger: { trigger: element, start: 'top bottom', end: 'bottom top', scrub: true } }));
@@ -265,11 +266,11 @@ function MotionPage({ children }) {
         if (hero) {
           const timeline = gsap.timeline({ scrollTrigger: { trigger: hero, start: 'top top', end: '+=1150', scrub: 1.1 } });
           timeline.to('.hero-copy', { y: -145, opacity: .16, ease: 'none' }, 0)
-            .to('.hero-stage--front', { scale: 1.08, rotateZ: 2, xPercent: 1, yPercent: 3, ease: 'none' }, 0)
-            .to('.hero-depth--mid', { xPercent: 10, yPercent: -8, scale: 1.12, ease: 'none' }, 0)
-            .to('.hero-depth--back', { xPercent: -6, yPercent: 8, scale: 1.05, ease: 'none' }, 0)
-            .to('.hero-annotations', { yPercent: -10, opacity: .82, ease: 'none' }, 0)
-            .to('.hero-foot', { y: 24, opacity: 0, ease: 'none' }, 0);
+            .to('.hero-stage--front', { scale: compact ? 1.18 : 1.46, rotateZ: compact ? 2 : 5, xPercent: compact ? 2 : 9, yPercent: compact ? 4 : 10, ease: 'none' }, 0)
+            .to('.hero-depth--mid', { xPercent: 14, yPercent: -12, scale: 1.18, ease: 'none' }, 0)
+            .to('.hero-depth--back', { xPercent: -8, yPercent: 10, scale: 1.08, ease: 'none' }, 0)
+            .to('.hero-annotations', { yPercent: compact ? -8 : -28, opacity: compact ? .8 : .35, ease: 'none' }, 0)
+            .to('.hero-foot', { y: 40, opacity: 0, ease: 'none' }, 0);
         }
       }, scope);
       ScrollTrigger.refresh();
@@ -285,18 +286,18 @@ class SceneErrorBoundary extends React.Component {
   render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
 
-function SceneAnnotations({ axisPoints }) {
-  const [active, setActive] = useState('BUILD');
+function SceneAnnotations({ axisPoints, active, onSelect }) {
   return <div className="hero-annotations" role="group" aria-label="Interactive axis points">
-    {axisPoints.map((point) => <button key={point.label} type="button" aria-pressed={active === point.label} className={active === point.label ? 'is-active' : ''} onFocus={() => setActive(point.label)} onMouseEnter={() => setActive(point.label)} onClick={() => setActive(point.label)}><span>{point.label}</span><small>{point.detail}</small></button>)}
+    {axisPoints.map((point) => <button key={point.label} type="button" aria-pressed={active === point.label} className={active === point.label ? 'is-active' : ''} onFocus={() => onSelect(point.label)} onMouseEnter={() => onSelect(point.label)} onClick={() => onSelect(point.label)}><span>{point.label}</span><small>{point.detail}</small></button>)}
     <p>Focus a point to inspect the practice.</p>
   </div>;
 }
-function HeroFallback() {
-  return <div className="scene-fallback" aria-hidden="true"><div className="fallback-core">CL</div><i className="fallback-axis fallback-axis--x"/><i className="fallback-axis fallback-axis--y"/><i className="fallback-orbit fallback-orbit--one"/><i className="fallback-orbit fallback-orbit--two"/><b className="fallback-point fallback-point--one">BUILD</b><b className="fallback-point fallback-point--two">BREAK</b><b className="fallback-point fallback-point--three">LEARN</b><b className="fallback-point fallback-point--four">REBUILD</b></div>;
+function HeroFallback({ active }) {
+  return <div className="scene-fallback" aria-hidden="true"><div className="fallback-core">CL</div><i className="fallback-axis fallback-axis--x"/><i className="fallback-axis fallback-axis--y"/><i className="fallback-orbit fallback-orbit--one"/><i className="fallback-orbit fallback-orbit--two"/><b className={`fallback-point fallback-point--one ${active === 'BUILD' ? 'is-active' : ''}`}>BUILD</b><b className={`fallback-point fallback-point--two ${active === 'BREAK' ? 'is-active' : ''}`}>BREAK</b><b className={`fallback-point fallback-point--three ${active === 'LEARN' ? 'is-active' : ''}`}>LEARN</b><b className={`fallback-point fallback-point--four ${active === 'REBUILD' ? 'is-active' : ''}`}>REBUILD</b></div>;
 }
 function HeroScene() {
   const [renderThree, setRenderThree] = useState(false);
+  const [activePoint, setActivePoint] = useState('BUILD');
   const reduced = useReducedMotion();
   useEffect(() => {
     if (reduced || !window.matchMedia('(pointer: fine)').matches) { setRenderThree(false); return undefined; }
@@ -308,7 +309,7 @@ function HeroScene() {
     else timerId = window.setTimeout(enable, 650);
     return () => { cancelled = true; if (idleId) window.cancelIdleCallback(idleId); if (timerId) window.clearTimeout(timerId); };
   }, [reduced]);
-  return <section className="hero-scene" aria-labelledby="hero-title"><div className="hero-depth hero-depth--back"/><div className="hero-depth hero-depth--mid"/><div className="hero-grid"><div className="hero-copy"><p className="eyebrow">Alpheaus Daniel · known professionally as Coach Logic</p><h1 id="hero-title" className="hero-title" data-reveal>I build clarity into <em><ScrambleText>complex systems.</ScrambleText></em></h1><p className="hero-lede" data-reveal>Alpheaus Daniel, known professionally as Coach Logic, is a software developer and Computer Engineering student who builds web applications, backend systems, and developer tools.</p><div className="hero-actions" data-reveal><Button to="/work">Enter selected work</Button><TransitionLink to="/about" className="text-link">Read the short version <ArrowUpRight size={15}/></TransitionLink></div></div><div className="hero-stage hero-stage--front">{renderThree ? <SceneErrorBoundary fallback={<HeroFallback/>}><React.Suspense fallback={<HeroFallback/>}><ThreeScene axisPoints={axisPoints}/></React.Suspense></SceneErrorBoundary> : <HeroFallback/>}<SceneAnnotations axisPoints={axisPoints}/><span className="hero-stage__label hero-stage__label--top">01 / INTERACTIVE AXIS</span><span className="hero-stage__label hero-stage__label--bottom">Hover or focus a point</span></div></div><div className="hero-foot"><span>Scroll to explore the work</span><span>INDEX / 00</span></div></section>;
+  return <section className="hero-scene" aria-labelledby="hero-title"><div className="hero-depth hero-depth--back"/><div className="hero-depth hero-depth--mid"/><div className="hero-grid"><div className="hero-copy"><p className="eyebrow">Alpheaus Daniel · known professionally as Coach Logic</p><h1 id="hero-title" className="hero-title" data-reveal>I build clarity into <em><ScrambleText>complex systems.</ScrambleText></em></h1><p className="hero-lede" data-reveal>Alpheaus Daniel, known professionally as Coach Logic, is a software developer and Computer Engineering student who builds web applications, backend systems, and developer tools.</p><div className="hero-actions" data-reveal><Button to="/work">Enter selected work</Button><TransitionLink to="/about" className="text-link">Read the short version <ArrowUpRight size={15}/></TransitionLink></div></div><div className="hero-stage hero-stage--front">{renderThree ? <SceneErrorBoundary fallback={<HeroFallback active={activePoint}/> }><React.Suspense fallback={<HeroFallback active={activePoint}/> }><ThreeScene axisPoints={axisPoints}/></React.Suspense></SceneErrorBoundary> : <HeroFallback active={activePoint}/>}<SceneAnnotations axisPoints={axisPoints} active={activePoint} onSelect={setActivePoint}/><span className="hero-stage__label hero-stage__label--top">01 / INTERACTIVE AXIS</span><span className="hero-stage__label hero-stage__label--bottom">Hover or focus a point</span></div></div><div className="hero-foot"><span>Scroll to explore the work</span><span>INDEX / 00</span></div></section>;
 }
 function CinematicPin() {
   const scope = useRef(null);
@@ -373,19 +374,19 @@ function FlowTimeline() {
         </svg>
         <ol className="experience-map__list">
           <li className="experience-card experience-card--academy">
-            <span className="experience-card__date">AUG 2025 — MAY 2026 · CONCLUDED</span>
+            <span className="experience-card__date">2023 — MAY 2026 · CONCLUDED</span>
             <h3>LogicLabs Academy</h3>
             <strong>Building a community around learning by doing.</strong>
-            <p>I founded and led a software-learning initiative that brought together more than 200 students around learning, collaboration, and practical development. The initiative concluded in May 2026.</p>
+            <p>I co-founded and worked with LogicLabs Academy, a software-learning initiative focused on collaboration and practical development. My relevant period with the academy concluded in May 2026.</p>
           </li>
           <li className="experience-card experience-card--campus">
             <span className="experience-card__date">CONCEPT · UNFINISHED</span>
             <h3>Campus-Link</h3>
-            <strong>An academic companion explored with interns.</strong>
-            <p>A proposed web-app concept for academic resources, student updates, convocation preparation, document organization, and missing-graduation-document detection. It was not completed as a finished product.</p>
+            <strong>An academic companion created with collaborators.</strong>
+            <p>I created the concept with collaborators to explore academic resources, student updates, convocation preparation, document organization, and missing-graduation-document detection. It was not completed as a finished product.</p>
           </li>
           <li className="experience-card experience-card--axial">
-            <span className="experience-card__date">JAN 2026 — PRESENT · LIVE / EVOLVING</span>
+            <span className="experience-card__date">LIVE / IN DEVELOPMENT · CURRENT STATUS</span>
             <h3>Axial Systems</h3>
             <strong>A live web experience, with the wider system still evolving.</strong>
             <p>As Lead Developer, I built the landing page with HTML, CSS, JavaScript, GSAP, and ScrollTrigger.</p>
