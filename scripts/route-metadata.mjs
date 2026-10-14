@@ -1,40 +1,86 @@
-import { readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import {
+  OG_IMAGE_ALT,
+  OG_IMAGE_URL,
+  getCanonicalUrl,
+  getRouteSeo,
+  getRouteStructuredData,
+  routeMetadata,
+} from '../src/seo.js';
 
-const site = 'https://veloratech.github.io/portfolio';
-const routes = [
-  ['/', 'Coach Logic — Software Developer & Toolmaker', 'Coach Logic is a software developer and Computer Engineering student building web applications, developer tools, and code-quality experiments.'],
-  ['/work', 'Selected Work — Coach Logic', 'Explore Coach Logic’s web applications, developer tools, and interface projects, with clear project status and links to live work and source repositories.'],
-  ['/engineering', 'Engineering Notes — Coach Logic', 'Developer tools and engineering work by Coach Logic, spanning observability, telemetry, code quality, architecture, and debugging.'],
-  ['/about', 'About Coach Logic — Software Developer', 'Meet Coach Logic, a software developer and Computer Engineering student focused on web applications, backend systems, developer tools, and practical software investigation.'],
-  ['/contact', 'Contact Coach Logic', 'Contact Coach Logic about thoughtful product work, developer tools, and collaborations. Find verified social profiles and download the resume.'],
-  ['/work/aster', 'Aster — Coach Logic', 'A full-stack technology intelligence platform for exploring technologies, comparing options, and understanding their ecosystem. Live and evolving.'],
-  ['/work/mouaec', 'MOUAEC — Coach Logic', 'A university voting system with 30-second count refreshes, administrator correction controls, and Supabase Row Level Security.'],
-  ['/work/telica', 'Telica Digital Concept — Coach Logic', 'A technology-skills cohort registration site with an application flow and Web3Forms email notifications.'],
-  ['/work/axial', 'Axial Systems — Coach Logic', 'A live landing page built with HTML, CSS, JavaScript, GSAP, and ScrollTrigger; broader work remains in development.'],
-  ['/work/agenttrace', 'AgentTrace — Coach Logic', 'A developer tool for process-level observability of AI coding agents, including process trees, snapshots, watch modes, and event timelines.'],
-  ['/work/nativerelay', 'NativeRelay — Coach Logic', 'A local-first native telemetry project exploring normalized process and file observations.'],
-  ['/work/cleaner', 'Cleaner — Coach Logic', 'A local-first code-cleaning CLI for JavaScript and Python, designed to keep cleaned output separate from source by default.'],
-];
-
-const escapeHtml = (value) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const root = resolve(process.argv[2] || 'dist');
-for (const [route, title, description] of routes) {
+const escapeHtml = (value) => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+for (const [route, seo] of Object.entries(routeMetadata)) {
+  if (seo.title.length < 30 || seo.title.length > 60) throw new Error(`${route}: title must be 30–60 characters (${seo.title.length})`);
+  if (seo.description.length < 50 || seo.description.length > 160) throw new Error(`${route}: description must be 50–160 characters (${seo.description.length})`);
+}
+await readFile(resolve(root, new URL(OG_IMAGE_URL).pathname.split('/').at(-1)));
+const routes = Object.keys(routeMetadata);
+const rootHtml = await readFile(resolve(root, 'index.html'), 'utf8');
+await writeFile(resolve(root, '404.html'), rootHtml);
+
+function setTagAttribute(html, selectorAttribute, selectorValue, attribute, value) {
+  const selector = escapeRegex(selectorValue);
+  const tagPattern = new RegExp(`<${selectorAttribute === 'rel' ? 'link' : 'meta'}\\b(?=[^>]*\\b${selectorAttribute}="${selector}")[^>]*>`, 'i');
+  const match = html.match(tagPattern);
+  if (!match) throw new Error(`Missing <${selectorAttribute}="${selectorValue}"> in generated HTML`);
+  const attributePattern = new RegExp(`\\b${attribute}="[^"]*"`, 'i');
+  const updatedTag = attributePattern.test(match[0])
+    ? match[0].replace(attributePattern, `${attribute}="${escapeHtml(value)}"`)
+    : match[0].replace(/\s*\/?>$/, ` ${attribute}="${escapeHtml(value)}"$&`);
+  return html.replace(match[0], updatedTag);
+}
+
+function setMeta(html, kind, name, content) {
+  return setTagAttribute(html, kind, name, 'content', content);
+}
+
+for (const route of routes) {
   const file = resolve(root, route === '/' ? 'index.html' : `${route.slice(1)}/index.html`);
+  if (route !== '/') {
+    await mkdir(dirname(file), { recursive: true });
+    await writeFile(file, rootHtml);
+  }
   let html = await readFile(file, 'utf8');
-  const url = `${site}${route === '/' ? '/' : `${route}/`}`;
-  const replace = (pattern, value) => {
-    if (!pattern.test(html)) throw new Error(`Missing metadata pattern in ${file}: ${pattern}`);
-    html = html.replace(pattern, value);
-  };
-  replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`);
-  replace(/(<meta name="description" content=")[^"]*("\s*\/?>)/, `$1${escapeHtml(description)}$2`);
-  replace(/(<link rel="canonical" href=")[^"]*("\s*\/?>)/, `$1${url}$2`);
-  replace(/(<meta property="og:title" content=")[^"]*("\s*\/?>)/, `$1${escapeHtml(title)}$2`);
-  replace(/(<meta property="og:description" content=")[^"]*("\s*\/?>)/, `$1${escapeHtml(description)}$2`);
-  replace(/(<meta property="og:url" content=")[^"]*("\s*\/?>)/, `$1${url}$2`);
-  replace(/(<meta name="twitter:title" content=")[^"]*("\s*\/?>)/, `$1${escapeHtml(title)}$2`);
-  replace(/(<meta name="twitter:description" content=")[^"]*("\s*\/?>)/, `$1${escapeHtml(description)}$2`);
+  const seo = getRouteSeo(route);
+  const canonical = getCanonicalUrl(route);
+  const title = escapeHtml(seo.title);
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
+  if (!/<title>[^<]*<\/title>/.test(html)) throw new Error(`Missing title in ${file}`);
+  html = setMeta(html, 'name', 'description', seo.description);
+  html = setMeta(html, 'name', 'author', 'Alpheaus Daniel');
+  html = setMeta(html, 'name', 'robots', 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
+  html = setMeta(html, 'property', 'og:type', seo.type);
+  html = setMeta(html, 'property', 'og:site_name', 'Alpheaus Daniel — Developer Portfolio');
+  html = setMeta(html, 'property', 'og:title', seo.title);
+  html = setMeta(html, 'property', 'og:description', seo.description);
+  html = setMeta(html, 'property', 'og:url', canonical);
+  html = setMeta(html, 'property', 'og:image', OG_IMAGE_URL);
+  html = setMeta(html, 'property', 'og:image:alt', OG_IMAGE_ALT);
+  html = setMeta(html, 'property', 'og:image:width', '1200');
+  html = setMeta(html, 'property', 'og:image:height', '630');
+  html = setMeta(html, 'property', 'og:image:type', 'image/png');
+  html = setMeta(html, 'name', 'twitter:card', 'summary_large_image');
+  html = setMeta(html, 'name', 'twitter:title', seo.title);
+  html = setMeta(html, 'name', 'twitter:description', seo.description);
+  html = setMeta(html, 'name', 'twitter:image', OG_IMAGE_URL);
+  html = setMeta(html, 'name', 'twitter:image:alt', OG_IMAGE_ALT);
+  html = setTagAttribute(html, 'rel', 'canonical', 'href', canonical);
+  const schema = JSON.stringify(getRouteStructuredData(route)).replaceAll('<', '\\u003c');
+  const schemaPattern = /<script\b(?=[^>]*\bid="route-schema")(?=[^>]*\btype="application\/ld\+json")[^>]*>[\s\S]*?<\/script>/i;
+  if (!schemaPattern.test(html)) throw new Error(`Missing route-schema script in ${file}`);
+  html = html.replace(schemaPattern, `<script type="application/ld+json" id="route-schema">${schema}</script>`);
   await writeFile(file, html);
 }
-console.log(`Injected route metadata into ${routes.length} static Pages documents.`);
+
+const sitemap = [
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  ...routes.map((route) => `  <url><loc>${getCanonicalUrl(route)}</loc><changefreq>${route === '/' ? 'weekly' : 'monthly'}</changefreq><priority>${route === '/' ? '1.0' : route.startsWith('/work/') ? '0.7' : '0.8'}</priority></url>`),
+  '</urlset>',
+  '',
+].join('\n');
+await writeFile(resolve(root, 'sitemap.xml'), sitemap);
+console.log(`Injected route metadata into ${routes.length} static Pages documents and generated sitemap.xml.`);

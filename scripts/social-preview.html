@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coach Logic social preview</title>
+  <style>
+    :root { color-scheme: light; font-family: "Space Grotesk", "Arial", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: #f4f0e8; color: #262923; }
+    .card { display: grid; grid-template-columns: 1.12fr .88fr; align-items: center; gap: 36px; width: 100%; height: 100%; padding: 62px 76px; overflow: hidden; background: radial-gradient(circle at 83% 45%, rgba(170,160,198,.22), transparent 32%), linear-gradient(145deg, #f4f0e8, #ebe5d9); }
+    .copy { position: relative; z-index: 2; display: grid; align-content: center; gap: 22px; }
+    .identity { display: flex; align-items: center; gap: 12px; color: #3e4840; font: 600 15px/1.2 Arial, sans-serif; letter-spacing: .17em; text-transform: uppercase; }
+    .identity img { width: 46px; height: 46px; }
+    .kicker { margin: 0; color: #657360; font: 500 14px/1.4 Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { max-width: 700px; margin: 0; font-size: 66px; font-weight: 500; line-height: .98; letter-spacing: -.075em; }
+    h1 em { color: #718368; font-weight: 500; }
+    .subtitle { max-width: 580px; margin: 0; color: #55594f; font: 20px/1.55 Arial, sans-serif; }
+    .topics { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 5px; }
+    .topics span { border: 1px solid rgba(38,41,35,.2); padding: 9px 12px; color: #3e4840; font: 12px/1.2 Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; }
+    .visual { position: relative; display: grid; place-items: center; min-width: 0; aspect-ratio: 1; }
+    .orbit { position: absolute; width: 82%; aspect-ratio: 1; border: 1px solid rgba(38,41,35,.22); border-radius: 50%; transform: rotate(-24deg) scaleX(.83); }
+    .orbit::before, .orbit::after { position: absolute; content: ""; inset: 12%; border: 1px solid rgba(170,106,77,.48); border-radius: 50%; transform: rotate(50deg) scaleX(.61); }
+    .orbit::after { inset: 24%; border-color: rgba(113,131,104,.48); transform: rotate(-42deg) scaleX(.72); }
+    .mark-disc { position: relative; z-index: 1; display: grid; place-items: center; width: 58%; aspect-ratio: 1; border: 1px solid rgba(38,41,35,.16); border-radius: 50%; background: rgba(255,250,241,.7); box-shadow: 0 28px 72px rgba(38,41,35,.12); }
+    .mark-disc img { width: 74%; height: 74%; }
+    .index { position: absolute; right: 0; bottom: 13px; color: #72766b; font: 11px/1.4 Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <main class="card" aria-label="Portfolio social sharing preview">
+    <section class="copy">
+      <div class="identity"><img src="../public/brand-mark.svg" alt="" /><span>Coach Logic</span></div>
+      <p class="kicker">Alpheaus Daniel · Software Developer</p>
+      <h1>I build clarity into <em>complex systems.</em></h1>
+      <p class="subtitle">Computer Engineering student building web applications and developer tools, with a practical focus on how software works beneath the surface.</p>
+      <div class="topics"><span>Web applications</span><span>Developer tools</span><span>Practical engineering</span></div>
+    </section>
+    <aside class="visual" aria-hidden="true"><div class="orbit"></div><div class="mark-disc"><img src="../public/brand-mark.svg" alt="" /></div><span class="index">ALPHEAUS DANIEL / PORTFOLIO</span></aside>
+  </main>
+</body>
+</html>
