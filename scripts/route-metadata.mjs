@@ -22,7 +22,7 @@ const root = resolve(process.argv[2] || 'dist');
 for (const [route, title, description] of routes) {
   const file = resolve(root, route === '/' ? 'index.html' : `${route.slice(1)}/index.html`);
   let html = await readFile(file, 'utf8');
-  const url = `${site}${route === '/' ? '/' : route}`;
+  const url = `${site}${route === '/' ? '/' : `${route}/`}`;
   const replace = (pattern, value) => {
     if (!pattern.test(html)) throw new Error(`Missing metadata pattern in ${file}: ${pattern}`);
     html = html.replace(pattern, value);

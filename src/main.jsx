@@ -361,7 +361,8 @@ function Layout({ children }) {
     const [title, description] = pageMetadata[path] || (project
       ? [`${project.name} — Coach Logic`, `${project.description} Current status: ${project.status}.`]
       : ['Page Not Found — Coach Logic', 'The requested Coach Logic portfolio page could not be found.']);
-    const canonicalUrl = new URL(`${import.meta.env.BASE_URL}${path === '/' ? '' : path.slice(1)}`, window.location.origin).href;
+    const canonicalPath = path === '/' ? '' : `${path.slice(1)}/`;
+    const canonicalUrl = new URL(`${import.meta.env.BASE_URL}${canonicalPath}`, window.location.origin).href;
     document.title = title;
     document.querySelector('meta[name="description"]')?.setAttribute('content', description);
     document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonicalUrl);
