@@ -213,8 +213,6 @@ button { font: inherit; }
 .footer-note { max-width: 18rem; color: rgba(255, 250, 241, .58); font-size: .76rem; line-height: 1.7; }
 .resume-action { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; margin-top: 1.2rem; border-bottom: 1px solid currentColor; padding-bottom: .35rem; color: var(--white); font: 500 .59rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .resume-action:hover { color: var(--lilac); }
-.resume-action--pending { border-bottom-color: rgba(255, 250, 241, .28); color: rgba(255, 250, 241, .7); cursor: not-allowed; }
-.resume-action small { color: rgba(255, 250, 241, .45); font-size: .5rem; letter-spacing: .04em; }
 .social-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem 1rem; margin-top: 1.5rem; }
 .social-links a { display: inline-flex; align-items: center; justify-content: space-between; gap: .4rem; border-bottom: 1px solid rgba(255, 250, 241, .2); padding-bottom: .35rem; color: var(--white); font: .6rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .social-links a:hover { border-color: var(--lilac); color: var(--lilac); }
@@ -277,8 +275,29 @@ button { font: inherit; }
 .about-profile .social-links a { border-color: var(--line); color: var(--ink); }
 .about-profile .social-links a:hover { border-color: var(--lichen); color: var(--lichen-dark); }
 .about-profile .resume-action { color: var(--ink); }
-.about-profile .resume-action--pending { border-bottom-color: var(--line); color: var(--ink-soft); }
-.about-profile .resume-action small { color: var(--ink-soft); }
+.about-profile__copy { display: grid; gap: 1.2rem; align-content: center; }
+.about-profile__copy p { max-width: 34rem; margin: 0; color: var(--ink-soft); font-size: 1rem; line-height: 1.85; }
+.about-thinking { background: var(--ink); color: var(--white); padding: clamp(6rem, 12vw, 12rem) clamp(1rem, 4vw, 3.5rem); }
+.about-thinking__inner { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: clamp(3rem, 9vw, 10rem); width: min(1400px, 100%); margin: auto; }
+.about-thinking__heading { align-self: start; position: sticky; top: 8rem; }
+.about-thinking__heading > p { max-width: 24rem; margin: 2rem 0 0; color: rgba(255, 250, 241, .62); font-size: .9rem; line-height: 1.8; }
+.about-philosophy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: rgba(255, 250, 241, .18); }
+.about-philosophy__step { min-height: 20rem; padding: 1.4rem; background: var(--ink); transition: background .3s ease, transform .3s ease; }
+.about-philosophy__step:hover { z-index: 1; background: var(--lichen-dark); transform: translateY(-6px); }
+.about-philosophy__step > span { color: var(--lilac); font: .58rem var(--mono); letter-spacing: .12em; }
+.about-philosophy__step h3 { max-width: 13rem; margin: 5rem 0 1rem; color: var(--white); font: 500 clamp(1.8rem, 3.2vw, 3.3rem) /.9 var(--display); letter-spacing: -.09em; }
+.about-philosophy__step p { max-width: 18rem; margin: 0; color: rgba(255, 250, 241, .62); font-size: .76rem; line-height: 1.75; }
+.about-history { background: var(--ink); color: var(--white); }
+.about-history .route-heading { border-color: rgba(255, 250, 241, .18); }
+.about-history .display-title { color: var(--white); }
+.about-history .section-intro { color: rgba(255, 250, 241, .64); }
+.about-history .experience-map { margin-top: 5rem; }
+.experience-card strong { display: block; margin: .7rem 0; color: rgba(255, 250, 241, .82); font: 500 .8rem/1.45 var(--display); }
+.experience-card--campus { left: 37%; top: 54%; width: min(21rem, 35%); }
+.experience-card--axial { right: 0; top: 23%; width: min(25rem, 38%); }
+.experience-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.3rem; }
+.experience-actions .text-link { border-color: rgba(255, 250, 241, .3); color: var(--white); }
+.experience-actions .text-link:hover { border-color: var(--lilac); color: var(--lilac); }
 .about-rows article { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; border-top: 1px solid var(--line); padding: 2rem 0; }
 .about-rows article > span { color: var(--ink-soft); font: .59rem var(--mono); line-height: 1.7; }
 .about-rows h2 { margin: 0 0 .7rem; font: 500 clamp(2rem, 4vw, 4rem) /.9 var(--display); letter-spacing: -.1em; }
@@ -399,9 +418,14 @@ button { font: inherit; }
   .experience-map__legend { display: grid; gap: .5rem; }
   .timeline-curve { inset: 5rem 0 16rem 0; }
   .experience-card { width: min(100%, 20rem); }
-  .experience-card--academy { left: 4%; top: 53%; }
-  .experience-card--axial { right: 0; top: 70%; }
-  .experience-card--tools { right: 0; bottom: 0; }
+  .about-thinking__inner { grid-template-columns: 1fr; gap: 3rem; }
+  .about-thinking__heading { position: static; }
+  .about-philosophy { grid-template-columns: 1fr; }
+  .about-philosophy__step { min-height: 15rem; }
+  .about-philosophy__step h3 { margin-top: 3.5rem; }
+  .experience-card--academy { left: 4%; top: 38%; width: 92%; }
+  .experience-card--campus { left: 4%; top: 61%; width: 92%; }
+  .experience-card--axial { right: 4%; top: 82%; width: 92%; }
   .curve-date--end { right: 4%; bottom: 2rem; }
   .footer-top { display: grid; min-height: auto; gap: 3rem; }
   .footer-cta { font-size: clamp(2.7rem, 13vw, 5rem); }
