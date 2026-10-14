@@ -108,6 +108,9 @@ export function getRouteStructuredData(path) {
   const normalized = path.replace(/\/+$/, '') || '/';
   const seo = getRouteSeo(normalized);
   const url = getCanonicalUrl(normalized);
+  const breadcrumbItems = [{ '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_BASE_URL}/` }];
+  if (normalized !== '/') breadcrumbItems.push({ '@type': 'ListItem', position: 2, name: normalized === '/work' ? 'Selected work' : normalized === '/engineering' ? 'Engineering' : normalized === '/about' ? 'About' : normalized === '/contact' ? 'Contact' : 'Work', item: normalized.startsWith('/work/') ? `${SITE_BASE_URL}/work/` : url });
+  if (seo.projectName) breadcrumbItems.push({ '@type': 'ListItem', position: 3, name: seo.projectName, item: url });
   const page = {
     '@type': seo.schemaType,
     '@id': `${url}#webpage`,
@@ -118,8 +121,12 @@ export function getRouteStructuredData(path) {
     isPartOf: { '@id': WEBSITE_ID },
     primaryImageOfPage: { '@type': 'ImageObject', url: OG_IMAGE_URL },
   };
-  if (normalized === '/') page.mainEntity = { '@id': PERSON_ID };
-  const graph = [page];
+  if (normalized === '/' || normalized === '/about') page.mainEntity = { '@id': PERSON_ID };
+  const graph = [page, {
+    '@type': 'BreadcrumbList',
+    '@id': `${url}#breadcrumb`,
+    itemListElement: breadcrumbItems,
+  }];
   if (seo.projectName) {
     graph.push({
       '@type': 'CreativeWork',

@@ -25,8 +25,8 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; background: var(--canvas); }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body { margin: 0; min-width: 320px; background: var(--canvas); overflow-x: hidden; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; }
 ::selection { background: var(--lichen); color: var(--white); }
@@ -549,4 +549,27 @@ button { font: inherit; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-annotations button { transition: none; }
+}
+
+
+/* Evidence-led project study additions */
+.study-detail-section { display: grid; grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); gap: clamp(2rem, 7vw, 8rem); padding: clamp(5rem, 10vw, 10rem) clamp(1rem, 4vw, 3.5rem); background: var(--ink); color: var(--white); }
+.study-detail-heading { width: min(520px, 100%); margin: auto; }
+.study-detail-heading .display-title { color: var(--white); }
+.study-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; width: min(900px, 100%); margin: auto; background: rgba(255, 250, 241, .22); }
+.study-detail-grid article { min-height: 14rem; padding: 1.25rem; background: var(--ink); }
+.study-detail-grid article > span { color: var(--lilac); font: .58rem var(--mono); letter-spacing: .1em; }
+.study-detail-grid article p { margin: 2.8rem 0 0; color: rgba(255, 250, 241, .82); font-size: .86rem; line-height: 1.75; }
+.study-detail-grid .study-actions { margin-top: 1.5rem; }
+.study-detail-grid .text-link { color: var(--white); }
+.related-study-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem 2rem; }
+.related-study-links a { display: inline-flex; align-items: center; gap: .55rem; font: 500 clamp(1.55rem, 3vw, 3rem) /.9 var(--display); letter-spacing: -.08em; }
+.about-profile__links { max-width: 34rem; margin: 0; color: var(--ink-soft); font-size: .88rem; line-height: 1.7; }
+.about-profile__links a { color: var(--lichen-dark); text-decoration: underline; text-decoration-color: rgba(113, 131, 104, .5); text-underline-offset: .2em; }
+@media (max-width: 820px) {
+  .study-detail-section { grid-template-columns: 1fr; gap: 3rem; }
+  .study-detail-grid { grid-template-columns: 1fr; }
+  .study-detail-grid article { min-height: 0; }
+  .study-detail-grid article p { margin-top: 1.4rem; }
+  .related-study-links { justify-content: flex-start; }
 }
