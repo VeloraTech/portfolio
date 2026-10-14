@@ -276,6 +276,9 @@ button { font: inherit; }
 .profile-note { max-width: 27rem; color: var(--ink-soft); line-height: 1.8; }
 .about-profile .social-links a { border-color: var(--line); color: var(--ink); }
 .about-profile .social-links a:hover { border-color: var(--lichen); color: var(--lichen-dark); }
+.about-profile .resume-action { color: var(--ink); }
+.about-profile .resume-action--pending { border-bottom-color: var(--line); color: var(--ink-soft); }
+.about-profile .resume-action small { color: var(--ink-soft); }
 .about-rows article { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; border-top: 1px solid var(--line); padding: 2rem 0; }
 .about-rows article > span { color: var(--ink-soft); font: .59rem var(--mono); line-height: 1.7; }
 .about-rows h2 { margin: 0 0 .7rem; font: 500 clamp(2rem, 4vw, 4rem) /.9 var(--display); letter-spacing: -.1em; }

@@ -65,8 +65,8 @@ const socialLinks = [
   { label: 'Email', href: 'mailto:alpheausdalighton@gmail.com' },
 ];
 const assetConfig = {
-  profilePhoto: { available: false, path: '/portfolio/assets/profile-photo.jpg' },
-  resume: { available: true, path: '/portfolio/assets/Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf' },
+  profilePhoto: { available: true, path: 'assets/profile-photo.jpg' },
+  resume: { available: true, path: 'assets/Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf' },
 };
 const axisPoints = [
   { label: 'BUILD', detail: 'make a useful first shape', position: [1.55, 0, 0], color: '#718368' },
