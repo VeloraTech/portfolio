@@ -41,6 +41,7 @@ jobs:
             mkdir -p "dist/work/$route"
             cp dist/index.html "dist/work/$route/index.html"
           done
+          node scripts/route-metadata.mjs dist
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
