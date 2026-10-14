@@ -313,14 +313,64 @@ function CinematicPin() {
 function FlowTimeline() {
   const rail = useRef(null);
   const [progress, setProgress] = useState(0);
+
   useEffect(() => {
-    const update = () => { if (!rail.current) return; const rect = rail.current.getBoundingClientRect(); setProgress(Math.min(1, Math.max(0, (window.innerHeight * .76 - rect.top) / Math.max(1, rect.height)))); };
+    const update = () => {
+      if (!rail.current) return;
+      const rect = rail.current.getBoundingClientRect();
+      const next = (window.innerHeight * 0.76 - rect.top) / Math.max(1, rect.height);
+      setProgress(Math.min(1, Math.max(0, next)));
+    };
     window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     update();
-    return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update); };
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
   }, []);
-  return <div className="experience-map" ref={rail}><div className="experience-map__legend"><span>2023 → PRESENT</span><b>Selected chapters, in sequence</b></div><div className="timeline-curve"><svg viewBox="0 0 760 720" role="img" aria-label="Curved experience timeline"><path className="experience-map__tube" d="M112 50 C650 46 674 160 576 214 C444 286 166 230 130 340 C92 456 304 508 618 458 C706 444 700 584 510 680" pathLength="1"/><path className="experience-map__liquid" d="M112 50 C650 46 674 160 576 214 C444 286 166 230 130 340 C92 456 304 508 618 458 C706 444 700 584 510 680" pathLength="1" style={{ strokeDashoffset: 1 - progress }}/><circle className="experience-map__marker" cx="112" cy="50" r="10"/><circle className="experience-map__marker" cx="510" cy="680" r="10"/></svg><span className="curve-date curve-date--start">2023</span><span className="curve-date curve-date--end">PRESENT</span></div><article className="experience-card experience-card--academy"><span>AUG 2025 — MAY 2026 · CONCLUDED</span><h3>LogicLabs Academy</h3><strong>Building a community around learning by doing.</strong><p>I founded and led a software-learning initiative that brought together more than 200 students around learning, collaboration, and practical development. The initiative concluded in May 2026.</p></article><article className="experience-card experience-card--campus"><span>CONCEPT · UNFINISHED</span><h3>Campus-Link</h3><strong>An academic companion explored with interns.</strong><p>A proposed web-app concept for academic resources, student updates, convocation preparation, document organization, and missing-graduation-document detection. It was not completed as a finished product.</p></article><article className="experience-card experience-card--axial"><span>JAN 2026 — PRESENT · LIVE / EVOLVING</span><h3>Axial Systems</h3><strong>A live web experience, with the wider system still evolving.</strong><p>As Lead Developer, I built the landing page with HTML, CSS, JavaScript, GSAP, and ScrollTrigger.</p><div className="experience-actions"><External href={projects.axial.href}>Visit Live Site</External><External href={projects.axial.repo}>View Source</External></div></article></div>;
+
+  return (
+    <div className="experience-map">
+      <div className="experience-map__legend">
+        <span>2023 → PRESENT</span>
+        <b>Selected chapters, in sequence</b>
+      </div>
+      <div className="experience-map__stage" ref={rail}>
+        <svg className="timeline-curve" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path className="experience-map__tube" d="M 390 140 C 735 55 825 342 610 450 C 405 555 255 625 390 760" pathLength="1" />
+          <path className="experience-map__liquid" d="M 390 140 C 735 55 825 342 610 450 C 405 555 255 625 390 760" pathLength="1" style={{ strokeDashoffset: 1 - progress }} />
+          <circle className="experience-map__marker" cx="390" cy="140" r="10" />
+          <circle className="experience-map__marker" cx="610" cy="450" r="10" />
+          <circle className="experience-map__marker" cx="390" cy="760" r="10" />
+        </svg>
+        <ol className="experience-map__list">
+          <li className="experience-card experience-card--academy">
+            <span className="experience-card__date">AUG 2025 — MAY 2026 · CONCLUDED</span>
+            <h3>LogicLabs Academy</h3>
+            <strong>Building a community around learning by doing.</strong>
+            <p>I founded and led a software-learning initiative that brought together more than 200 students around learning, collaboration, and practical development. The initiative concluded in May 2026.</p>
+          </li>
+          <li className="experience-card experience-card--campus">
+            <span className="experience-card__date">CONCEPT · UNFINISHED</span>
+            <h3>Campus-Link</h3>
+            <strong>An academic companion explored with interns.</strong>
+            <p>A proposed web-app concept for academic resources, student updates, convocation preparation, document organization, and missing-graduation-document detection. It was not completed as a finished product.</p>
+          </li>
+          <li className="experience-card experience-card--axial">
+            <span className="experience-card__date">JAN 2026 — PRESENT · LIVE / EVOLVING</span>
+            <h3>Axial Systems</h3>
+            <strong>A live web experience, with the wider system still evolving.</strong>
+            <p>As Lead Developer, I built the landing page with HTML, CSS, JavaScript, GSAP, and ScrollTrigger.</p>
+            <div className="experience-actions">
+              <External href={projects.axial.href}>Visit Live Site</External>
+              <External href={projects.axial.repo}>View Source</External>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  );
 }
 
 function Header() {
@@ -403,13 +453,134 @@ function Work() {
 }
 
 function Metrics({ active, setActive }) {
-  const data = [{ label: 'Explore', value: '01', title: 'A surface for curiosity', copy: 'The implemented exploration surface turns a broad technology question into a browsable starting point.' }, { label: 'Profiles', value: '02', title: 'Context before comparison', copy: 'Individual technology profiles gather the useful identity of a tool before asking visitors to choose.' }, { label: 'Compare', value: '03', title: 'Tradeoffs in view', copy: 'Comparison is a core implemented flow, giving a visitor a deliberate way to weigh options.' }, { label: 'Ecosystem', value: '04', title: 'The surrounding system', copy: 'Ecosystem information connects a technology to the larger set of tools around it.' }];
-  return <div className="metrics-module"><div className="metrics-tabs" role="tablist" aria-label="Aster surfaces">{data.map((item, index) => <button key={item.label} type="button" role="tab" aria-selected={active === index} className={active === index ? 'is-active' : ''} onClick={() => setActive(index)}><span>{item.value}</span>{item.label}</button>)}</div><div className="metric-detail"><div className="metric-orbit"><span>{data[active].value}</span><i/><i/><i/></div><div><span className="eyebrow">Implemented surface / {data[active].value}</span><h3>{data[active].title}</h3><p>{data[active].copy}</p></div></div></div>;
+  const data = [
+    { label: 'Explore', value: '01', title: 'Search the catalogue', copy: 'The repository describes name and category search, filtering, sorting, and pagination over the technology catalogue.' },
+    { label: 'Profiles', value: '02', title: 'Open a technology record', copy: 'A technology route retrieves the selected record together with its use cases and resources.' },
+    { label: 'Compare', value: '03', title: 'Compare without ranking', copy: 'The comparison view is designed for two to four selected technologies, presenting their details without an overall score or rank.' },
+    { label: 'Ecosystem', value: '04', title: 'Follow typed relationships', copy: 'The API returns incoming and outgoing technology relationships for a connected view of the catalogue.' },
+  ];
+  return (
+    <div className="metrics-module">
+      <div className="metrics-tabs" role="tablist" aria-label="Aster repository product surfaces">
+        {data.map((item, index) => (
+          <button key={item.label} type="button" role="tab" aria-selected={active === index} className={active === index ? 'is-active' : ''} onClick={() => setActive(index)}>
+            <span>{item.value}</span>{item.label}
+          </button>
+        ))}
+      </div>
+      <div className="metric-detail">
+        <div className="metric-orbit"><span>{data[active].value}</span><i/><i/><i/></div>
+        <div><span className="eyebrow">Repository surface / {data[active].value}</span><h3>{data[active].title}</h3><p>{data[active].copy}</p></div>
+      </div>
+    </div>
+  );
 }
 
 function AsterStudy() {
   const [active, setActive] = useState(0);
-  return <main className="aster-study"><section className="study-hero"><div className="study-hero__top"><TransitionLink to="/work" className="eyebrow">← Work index</TransitionLink><span className="eyebrow">Live / evolving</span></div><div className="study-hero__grid"><div><span className="eyebrow">Project study / 01</span><h1 className="study-title" data-reveal>Aster</h1><p className="study-type" data-reveal>Technology intelligence platform</p><p className="study-lede" data-reveal>Make the shifting technology landscape easier to explore, compare, and place in context.</p><div className="study-actions" data-reveal><External href={projects.aster.href}>Open live Aster</External><External href={projects.aster.repo}>Inspect GitHub repository</External></div></div><div className="study-hero__artifact" style={{ viewTransitionName: 'project-aster' }}><ProjectVisual project={projects.aster} large/></div></div></section><section className="study-section study-section--paper"><div className="study-section__intro"><span className="eyebrow">01 / Interface anatomy</span><h2 className="display-title" data-reveal>Four implemented<br/><em>surfaces.</em></h2><p className="section-intro" data-reveal>These are not invented dashboard metrics. They are the product surfaces described by the current build and used to explain its information architecture.</p></div><Metrics active={active} setActive={setActive}/></section><section className="study-section study-section--ink"><div className="study-section__intro"><span className="eyebrow eyebrow--light">02 / System decisions</span><h2 className="display-title display-title--light" data-reveal>Structure before<br/><em>noise.</em></h2><p className="section-intro section-intro--light" data-reveal>Aster is a full-stack system: React, TypeScript, Vite, Express, PostgreSQL, and Supabase. A Supabase Edge Function for current technology updates and further interface optimization remain in progress.</p></div><div className="aster-architecture" data-reveal><div className="architecture-node architecture-node--input">Visitor question<small>intent / curiosity</small></div><div className="architecture-line"/><div className="architecture-node architecture-node--core">Aster surface<small>explore / profile / compare</small></div><div className="architecture-line"/><div className="architecture-node architecture-node--data">Supabase + PostgreSQL<small>structured technology context</small></div></div><div className="study-notes"><article><span>DECISION 01</span><h3>Explore first.</h3><p>The entry point should help someone form a question before forcing a choice.</p></article><article><span>DECISION 02</span><h3>Compare deliberately.</h3><p>Comparison belongs after context, not as a decorative table at the end.</p></article><article><span>STATUS</span><h3>Still evolving.</h3><p>The update function and further interface optimization remain in progress.</p></article></div></section><section className="study-section study-section--paper"><div className="study-section__intro"><span className="eyebrow">03 / Evidence</span><h2 className="display-title" data-reveal>Original artifacts,<br/><em>verified links.</em></h2><p className="section-intro" data-reveal>The preview above is a live surface when embedding is available, with a clear fallback label when it is not. Use the links to inspect the deployed product and repository directly.</p></div><div className="artifact-grid"><div className="artifact-card" data-reveal><span>LIVE SURFACE</span><h3>Inspect the real product.</h3><p>Open Aster in a new tab to see the current deployed interface.</p><External href={projects.aster.href}>Open aster-nine-liard.vercel.app</External></div><div className="artifact-card artifact-card--lilac" data-reveal><span>CODE SURFACE</span><h3>Inspect the real repository.</h3><p>Read the implementation and current project state on GitHub.</p><External href={projects.aster.repo}>Open VeloraTech/Aster</External></div><div className="artifact-card artifact-card--line" data-reveal><span>WHAT IS NEXT</span><h3>Current updater path.</h3><p>The current-technology update function and further interface optimization are still work in progress.</p></div></div></section><section className="next-study"><span className="eyebrow">Next study</span><TransitionLink to="/work/mouaec"><span>MOUAEC</span><ArrowUpRight size={20}/></TransitionLink></section></main>;
+  const stack = ['React', 'TypeScript', 'Vite', 'Express', 'PostgreSQL', 'Supabase'];
+  return (
+    <main className="aster-study">
+      <section className="study-hero">
+        <div className="study-hero__top">
+          <TransitionLink to="/work" className="eyebrow">← Work index</TransitionLink>
+          <span className="eyebrow">Live / evolving</span>
+        </div>
+        <div className="study-hero__grid">
+          <div>
+            <span className="eyebrow">Project study / 01</span>
+            <h1 className="study-title" data-reveal>Aster</h1>
+            <p className="study-type">Technology intelligence and discovery</p>
+            <p className="study-lede" data-reveal>Aster helps developers understand what technologies do and how they connect. The project is organized around exploring a catalogue, opening technology profiles, comparing options, and following ecosystem relationships.</p>
+            <div className="study-actions" data-reveal>
+              <External href={projects.aster.href}>Open live Aster</External>
+              <External href={projects.aster.repo}>Inspect GitHub repository</External>
+            </div>
+          </div>
+          <div className="study-hero__artifact" style={{ viewTransitionName: 'project-aster' }}>
+            <ProjectVisual project={projects.aster} large />
+          </div>
+        </div>
+      </section>
+
+      <section className="study-section study-section--paper">
+        <div className="study-section__intro">
+          <span className="eyebrow">01 / Project overview</span>
+          <h2 className="display-title" data-reveal>Make the technology<br/><em>landscape legible.</em></h2>
+          <p className="section-intro" data-reveal>The repository describes Aster as a technology intelligence and discovery platform: a developer should be able to understand what a technology does and see how it connects to other tools.</p>
+        </div>
+        <div className="study-story-grid">
+          <article>
+            <span className="eyebrow">The question</span>
+            <h3>What does this tool do—and where does it fit?</h3>
+            <p>Aster starts from a focused product question rather than a claimed market study. A technology name is only useful when its purpose, use cases, alternatives, and relationships can be understood together.</p>
+          </article>
+          <article>
+            <span className="eyebrow">The approach</span>
+            <h3>Move from discovery to context.</h3>
+            <p>The repository groups the experience into Explore, technology profiles, Compare, and Ecosystem views. Together they provide routes from the catalogue to a specific tool and its typed relationships.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="study-section study-section--paper">
+        <div className="study-section__intro">
+          <span className="eyebrow">02 / Product surfaces</span>
+          <h2 className="display-title" data-reveal>Four routes into<br/><em>the catalogue.</em></h2>
+          <p className="section-intro" data-reveal>These four surfaces are documented in the current Aster repository. The deployed-site status is recorded separately below.</p>
+        </div>
+        <Metrics active={active} setActive={setActive} />
+      </section>
+
+      <section className="study-section study-section--ink">
+        <div className="study-section__intro">
+          <span className="eyebrow eyebrow--light">03 / Technical approach</span>
+          <h2 className="display-title display-title--light" data-reveal>A client, an API,<br/><em>a catalogue.</em></h2>
+          <p className="section-intro section-intro--light" data-reveal>The current repository uses a React, TypeScript, and Vite client with an Express and TypeScript REST API. The API reads catalogue data from PostgreSQL managed by Supabase, using <code>pg</code>.</p>
+        </div>
+        <div className="aster-architecture" data-reveal>
+          <div className="architecture-node architecture-node--input">React + TypeScript + Vite<small>client interface</small></div>
+          <div className="architecture-line" />
+          <div className="architecture-node architecture-node--core">Express REST API<small>TypeScript / versioned routes</small></div>
+          <div className="architecture-line" />
+          <div className="architecture-node architecture-node--data">PostgreSQL<small>managed by Supabase / accessed with pg</small></div>
+        </div>
+        <div className="study-notes aster-api-grid">
+          <article><span><code>GET /api/v1/technologies</code></span><h3>Find catalogue entries.</h3><p>The list endpoint supports search, category/type/ecosystem filters, name sorting, and pagination.</p></article>
+          <article><span><code>GET /api/v1/technologies/:slug</code></span><h3>Read one profile.</h3><p>A technology record includes its use cases and resources.</p></article>
+          <article><span><code>GET /api/v1/technologies/:slug/relationships</code></span><h3>Follow connections.</h3><p>The relationships endpoint returns typed incoming and outgoing links.</p></article>
+        </div>
+        <div className="aster-stack"><span className="aster-stack__label">STACK</span>{stack.map((item) => <span className="aster-stack__item" key={item}>{item}</span>)}</div>
+      </section>
+
+      <section className="study-section study-section--paper">
+        <div className="study-section__intro">
+          <span className="eyebrow">04 / Current status</span>
+          <h2 className="display-title" data-reveal>Source and deployment,<br/><em>kept distinct.</em></h2>
+          <p className="section-intro" data-reveal>Repository capability and deployed availability are different checks. This case study keeps both visible instead of presenting a loading surface as a completed result.</p>
+        </div>
+        <div className="artifact-grid aster-status-grid">
+          <article className="artifact-card" data-reveal>
+            <span>REPOSITORY / MAIN</span>
+            <h3>Four product experiences are documented.</h3>
+            <p>The README describes Explore, technology profiles, Compare, and Ecosystem, backed by an Express REST API and Supabase-managed PostgreSQL.</p>
+            <External href={projects.aster.repo}>Open the Aster repository</External>
+          </article>
+          <article className="artifact-card artifact-card--lilac" data-reveal>
+            <span>LIVE CHECK / 14 OCT 2026</span>
+            <h3>The public exploration is still in progress.</h3>
+            <p>The live homepage says the exploration experience is in development. During this check, the deployed Explore route remained on “Loading technologies…”.</p>
+            <External href={projects.aster.href}>Open the live product</External>
+          </article>
+        </div>
+      </section>
+
+      <section className="next-study">
+        <span className="eyebrow">Next study</span>
+        <TransitionLink to="/work/mouaec"><span>MOUAEC</span><ArrowUpRight size={20}/></TransitionLink>
+      </section>
+    </main>
+  );
 }
 
 function Engineering() { return <main className="route-page route-page--paper"><div className="route-heading"><div><Eyebrow>05 / Engineering · The systems room</Eyebrow><h1 className="display-title" data-reveal>Make the<br/><em>invisible legible.</em></h1></div><p className="section-intro" data-reveal>Observability, architecture, debugging, and the small choices that make software easier to trust.</p></div><div className="engineering-grid">{[['AgentTrace', 'See the process, not just the result.', '/work/agenttrace'], ['NativeRelay', 'Normalize the signal.', '/work/nativerelay'], ['Cleaner', 'Protect the source.', '/work/cleaner']].map(([title, copy, to], index) => <TransitionLink to={to} className="engineering-card" key={title} data-reveal><span>0{index + 1} / SYSTEMS</span><h2>{title}</h2><p>{copy}</p><b>Explore <ArrowUpRight size={15}/></b></TransitionLink>)}</div></main>; }
