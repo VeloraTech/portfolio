@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://veloratech.github.io/portfolio/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/aster/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/mouaec/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/telica/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/axial/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/agenttrace/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/nativerelay/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/work/cleaner/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/engineering/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/about/</loc></url>
-  <url><loc>https://veloratech.github.io/portfolio/contact/</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/aster</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/mouaec</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/telica</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/axial</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/agenttrace</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/nativerelay</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/work/cleaner</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/engineering</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/about</loc></url>
+  <url><loc>https://veloratech.github.io/portfolio/contact</loc></url>
 </urlset>
