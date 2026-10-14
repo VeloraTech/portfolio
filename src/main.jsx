@@ -61,12 +61,11 @@ const socialLinks = [
   { label: 'GitHub', href: 'https://github.com/VeloraTech' },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/coach-logic-804600366/' },
   { label: 'X', href: 'https://x.com/RyanDan934' },
-  { label: 'Instagram', href: 'https://www.instagram.com/tech.velora' },
   { label: 'Email', href: 'mailto:alpheausdalighton@gmail.com' },
 ];
 const assetConfig = {
-  profilePhoto: { available: true, path: 'assets/profile-photo.jpg' },
-  resume: { available: true, path: 'assets/Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf' },
+  profilePhoto: { available: true, path: `${import.meta.env.BASE_URL}assets/profile-photo.jpg` },
+  resume: { available: true, path: `${import.meta.env.BASE_URL}assets/Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf` },
 };
 const axisPoints = [
   { label: 'BUILD', detail: 'make a useful first shape', position: [1.55, 0, 0], color: '#718368' },
@@ -343,9 +342,36 @@ function Footer() {
   return <footer className="site-footer"><svg className="footer-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50 C160 6 270 80 430 42 S720 4 890 42 S1180 80 1440 28 V80 H0 Z"/></svg><div className="footer-top"><div><p className="eyebrow eyebrow--light">Coach Logic / 2026</p><p className="footer-note">A developer portfolio built around useful systems, honest evidence, and a little spatial thinking.</p><ResumeAction/></div><TransitionLink to="/contact" className="footer-cta">Start a thoughtful conversation <ArrowUpRight size={28}/></TransitionLink></div><div className="footer-grid"><div><span>EXPLORE</span><TransitionLink to="/work">Selected work <ArrowUpRight size={14}/></TransitionLink><TransitionLink to="/engineering">Engineering notes <ArrowUpRight size={14}/></TransitionLink></div><div><span>CONNECT</span><SocialLinks compact/></div><div><span>STATUS</span><p>Available for thoughtful product, tool, and interface work.</p></div></div><div className="footer-bottom"><span>Build. Break. Learn. Rebuild.</span><span>Made with React / Three / GSAP</span></div></footer>;
 }
 
+const pageMetadata = {
+  '/': ['Coach Logic — Software Developer & Toolmaker', 'Coach Logic is a software developer and Computer Engineering student building web applications, developer tools, and code-quality experiments.'],
+  '/work': ['Selected Work — Coach Logic', 'Explore Coach Logic’s web applications, developer tools, and interface projects, with clear project status and links to live work and source repositories.'],
+  '/engineering': ['Engineering Notes — Coach Logic', 'Developer tools and engineering work by Coach Logic, spanning observability, telemetry, code quality, architecture, and debugging.'],
+  '/about': ['About Coach Logic — Software Developer', 'Meet Coach Logic, a software developer and Computer Engineering student focused on web applications, backend systems, developer tools, and practical software investigation.'],
+  '/contact': ['Contact Coach Logic', 'Contact Coach Logic about thoughtful product work, developer tools, and collaborations. Find verified social profiles and download the resume.'],
+};
+
 function Layout({ children }) {
   const location = useLocation();
-  useEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); requestAnimationFrame(() => ScrollTrigger.refresh()); }, [location.pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+    const path = location.pathname.replace(/\/+$/, '') || '/';
+    const slug = path.startsWith('/work/') ? path.split('/')[2] : null;
+    const project = slug ? projects[slug] : null;
+    const [title, description] = pageMetadata[path] || (project
+      ? [`${project.name} — Coach Logic`, `${project.description} Current status: ${project.status}.`]
+      : ['Page Not Found — Coach Logic', 'The requested Coach Logic portfolio page could not be found.']);
+    const canonicalPath = path === '/' ? '' : `${path.slice(1)}/`;
+    const canonicalUrl = new URL(`${import.meta.env.BASE_URL}${canonicalPath}`, window.location.origin).href;
+    document.title = title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonicalUrl);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonicalUrl);
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title);
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', description);
+  }, [location.pathname]);
   return <><a className="skip-link" href="#main-content">Skip to content</a><Splash/><CursorField/><ScrollProgress/><Header/><MotionPage><div id="main-content">{children}</div></MotionPage><Footer/></>;
 }
 
