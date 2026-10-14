@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://veloratech.github.io/portfolio/sitemap.xml
