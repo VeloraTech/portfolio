@@ -66,7 +66,7 @@ const socialLinks = [
 ];
 const assetConfig = {
   profilePhoto: { available: false, path: '/portfolio/assets/profile-photo.jpg' },
-  resume: { available: false, path: '/portfolio/assets/Alpheaus-Dalighton-Resume.pdf' },
+  resume: { available: true, path: '/portfolio/assets/Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf' },
 };
 const axisPoints = [
   { label: 'BUILD', detail: 'make a useful first shape', position: [1.55, 0, 0], color: '#718368' },
@@ -336,7 +336,7 @@ function SocialLinks({ compact = false }) {
 }
 
 function ResumeAction() {
-  return assetConfig.resume.available ? <a className="resume-action" href={assetConfig.resume.path} download="Alpheaus-Dalighton-Resume.pdf"><FileText size={15}/> Download Resume <ArrowUpRight size={14}/></a> : <span className="resume-action resume-action--pending" role="status"><FileText size={15}/> Download Resume <small>PDF pending upload</small></span>;
+  return assetConfig.resume.available ? <a className="resume-action" href={assetConfig.resume.path} download="Alpheaus-Daniel-Code-Quality-Engineer-CV.pdf"><FileText size={15}/> Download Resume <ArrowUpRight size={14}/></a> : <span className="resume-action resume-action--pending" role="status"><FileText size={15}/> Download Resume <small>PDF pending upload</small></span>;
 }
 
 function Footer() {
